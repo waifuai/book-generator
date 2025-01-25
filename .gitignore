@@ -1,0 +1,4 @@
+books/*.json
+books/*.md
+__pycache__
+books
