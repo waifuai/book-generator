@@ -3,6 +3,8 @@ from unittest.mock import patch, mock_open, MagicMock
 from pathlib import Path
 import json
 import google.generativeai as genai
+import os
+import requests
 
 from book_generator import BookGenerator, BookGenerationError
 from book_writer import BookWriter
@@ -14,13 +16,24 @@ from config import APIConfig, BookGenerationError
 class TestAPIConfig(unittest.TestCase):
 
     @patch('config.genai.configure')
-    def test_api_config_init_success(self, mock_configure):
-        """Test successful API key loading and configuration."""
-        mock_api_key = "test_api_key"
+    def test_api_config_init_success_gemini(self, mock_configure):
+        """Test successful API key loading and configuration for Gemini."""
+        mock_api_key = "test_gemini_api_key"
         with patch("builtins.open", mock_open(read_data=mock_api_key)):
-            api_config = APIConfig("dummy_path.txt")
+            api_config = APIConfig(api_key_file="dummy_path.txt", api_provider="gemini")
             self.assertEqual(api_config.api_key, mock_api_key)
+            self.assertEqual(api_config.api_provider, "gemini")
             mock_configure.assert_called_once_with(api_key=mock_api_key)
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_api_config_init_success_openrouter(self):
+        """Test successful API key loading for OpenRouter."""
+        mock_api_key = "test_openrouter_api_key"
+        with patch("builtins.open", mock_open(read_data=mock_api_key)):
+            api_config = APIConfig(api_key_file="dummy_path.txt", openrouter_api_key_file="openrouter_dummy_path.txt", api_provider="openrouter")
+            self.assertEqual(api_config.api_key, mock_api_key)
+            self.assertEqual(api_config.api_provider, "openrouter")
+            self.assertEqual(os.environ["OPENROUTER_API_KEY"], mock_api_key)
 
     def test_api_config_file_not_found(self):
         """Test handling of missing API key file."""
@@ -28,28 +41,52 @@ class TestAPIConfig(unittest.TestCase):
             APIConfig("nonexistent_file.txt")
         self.assertIn("nonexistent_file.txt not found", str(context.exception))
 
+    def test_api_config_invalid_provider(self):
+        """Test handling of invalid API provider."""
+        with self.assertRaises(BookGenerationError) as context:
+            APIConfig(api_provider="invalid")
+        self.assertIn("Invalid API provider", str(context.exception))
+
 
 class TestContentGenerator(unittest.TestCase):
 
     @patch('content_generation.genai.GenerativeModel')
-    def test_generate_content_success(self, MockGenerativeModel):
-        """Test successful content generation."""
+    def test_generate_content_success_gemini(self, MockGenerativeModel):
+        """Test successful content generation with Gemini."""
         mock_model = MockGenerativeModel.return_value
         mock_response = MagicMock()
         mock_response.text = "Generated content"
         mock_model.generate_content.return_value = mock_response
 
         generator = ContentGenerator(model_name="test_model")
+        generator.api_config.api_provider = "gemini"
         result = generator.generate_content("Test prompt")
 
         self.assertEqual(result, "Generated content")
         mock_model.generate_content.assert_called_once_with("Test prompt")
+
+    @patch('content_generation.requests.post')
+    @patch.dict(os.environ, {"OPENROUTER_API_KEY": "test_openrouter_api_key"}, clear=True)
+    def test_generate_content_success_openrouter(self, mock_post):
+        """Test successful content generation with OpenRouter."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"choices": [{"message": {"content": "Generated content"}}]}
+        mock_response.raise_for_status.return_value = None
+        mock_post.return_value = mock_response
+
+        generator = ContentGenerator(model_name="test_model")
+        generator.api_config.api_provider = "openrouter"
+        result = generator.generate_content("Test prompt")
+
+        self.assertEqual(result, "Generated content")
+        mock_post.assert_called_once()
 
     @patch('content_generation.genai.GenerativeModel')
     @patch('content_generation.retry')
     def test_generate_content_retry(self, mock_retry, MockGenerativeModel):
         """Test that the retry decorator is applied."""
         mock_model = MockGenerativeModel.return_value
+        mock_model.generate_content.side_effect = Exception("API error")
 
         # Configure the mock retry decorator to just call the original function
         def call_through(*args, **kwargs):
@@ -59,8 +96,7 @@ class TestContentGenerator(unittest.TestCase):
         mock_retry.side_effect = call_through
 
         generator = ContentGenerator()
-        # Make the generate_content call fail
-        mock_model.generate_content.side_effect = Exception("API error")
+        generator.api_config.api_provider = "gemini"
 
         with self.assertRaises(BookGenerationError) as context:
             generator.generate_content("test prompt")
@@ -68,7 +104,6 @@ class TestContentGenerator(unittest.TestCase):
         # Check that retry and generate_content were called
         mock_retry.assert_called()
         mock_model.generate_content.assert_called()
-
 
 
 class TestTableOfContents(unittest.TestCase):
@@ -89,7 +124,7 @@ class TestTableOfContents(unittest.TestCase):
         toc = TableOfContents(toc_json)
         self.assertEqual(len(toc.chapters), 2)
         self.assertEqual(toc.chapters[0].title, "Chapter 1")
-        self.assertEqual(toc.chapters[0].subchapters, ["Subchapter 1.1", "Subchapter 1.2")
+        self.assertEqual(toc.chapters[0].subchapters, ["Subchapter 1.1", "Subchapter 1.2"])
         self.assertEqual(toc.chapters[1].title, "Chapter 2")
         self.assertEqual(toc.chapters[1].subchapters, ["Subchapter 2.1"])
 
@@ -126,7 +161,7 @@ class TestTableOfContents(unittest.TestCase):
             },
             {
                 "title": "Chapter 2",
-                "subchapters": ["Subchapter 2.1"
+                "subchapters": ["Subchapter 2.1"]
             }
         ]
         """
@@ -265,7 +300,6 @@ class TestBookWriter(unittest.TestCase):
         handle.write.assert_any_call("Mock TOC Markdown")
 
 
-
 class TestBookGenerator(unittest.TestCase):
 
     def setUp(self):
@@ -338,7 +372,8 @@ class TestBookGenerator(unittest.TestCase):
         self.generator.toc.chapters = [
             Chapter("Chapter 1", ["Subchapter 1.1"], 1),
             Chapter("Chapter 2", ["Subchapter 2.1"], 2),
-        
+        ]
+
         self.generator._generate_chapter = MagicMock()
 
         result = self.generator.generate_book()
@@ -346,7 +381,7 @@ class TestBookGenerator(unittest.TestCase):
         self.assertEqual(result, self.generator.filepath)
         self.assertEqual(self.generator._generate_chapter.call_count, 2)
         self.generator._generate_chapter.assert_any_call(self.generator.toc.chapters[0])
-        self.generator._generate_chapter.assert_any_call(self.generator.toc.chapters[1)
+        self.generator._generate_chapter.assert_any_call(self.generator.toc.chapters[1])
 
     def test_generate_book_no_toc(self):
         """Test generating a book without a TOC."""

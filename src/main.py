@@ -14,7 +14,8 @@ def main():
     # Example usage
     try:
         # Initialize API configuration
-        APIConfig()
+        api_provider = "openrouter"  # or "gemini"
+        APIConfig(api_provider=api_provider)
         
         # Initialize content generator and writer
         content_generator = ContentGenerator()
