@@ -2,11 +2,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-class BookGenerationError(Exception):
-    """Custom exception for book generation errors."""
-    pass
-
-
+from errors import BookGenerationError
 from content_generation import ContentGenerator
 from table_of_contents import TableOfContents, Chapter
 from book_writer import BookWriter
@@ -50,12 +46,6 @@ class BookGenerator:
             else:
                 print(f"No saved Table of Contents found at {toc_json_path}")
     
-    def pause_and_modify_toc(self):
-        """Pauses the generation process to allow TOC modification."""
-        self.save_toc()
-        input("Press Enter to continue after modifying the TOC JSON file...")
-        self.load_toc()
-    
     def generate_book(self):
         """Generates the entire book."""
         if not self.toc or not self.filepath or not self.book_title:
@@ -92,13 +82,3 @@ class BookGenerator:
             )
             subchapter_content = self.content_generator.generate_content(subchapter_prompt)
             self.writer.write_subchapter(self.filepath, chapter, idx, subchapter_title, subchapter_content)
-    
-    def browse_book(self):
-        """Allows the user to browse the current state of the book."""
-        if self.filepath and self.filepath.is_file():
-            with self.filepath.open("r", encoding="utf-8") as f:
-                content = f.read()
-                print(content)
-            input("Press Enter to continue after browsing the book...")
-        else:
-            print("Book file not found. Please generate the book first.")

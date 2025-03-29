@@ -3,3 +3,4 @@ books/*.md
 __pycache__
 books
 *.txt
+.env

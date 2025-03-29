@@ -1,80 +1,109 @@
-# Book Generator with Gemini
+# Book Generator with AI
 
-This Python script uses Google Gemini to generate books based on a given title and a prompt for the table of contents.  It dynamically creates chapters and subchapters based on the generated TOC, writing the content to a Markdown file.
+This Python script uses Google Gemini or other models via OpenRouter to generate books based on a given title and a prompt for the table of contents. It dynamically creates chapters and subchapters based on the generated TOC, writing the content to a Markdown file.
 
 ## Features
 
-* **Dynamic Book Generation:** Creates a book structure based on a user-provided title and TOC prompt.
-* **Gemini Integration:** Leverages the power of Google Gemini for content generation.
-* **JSON-based TOC:** Uses JSON for structured table of contents generation, making parsing robust.
-* **Error Handling:** Includes error handling for JSON parsing, API issues, and missing keys, logging errors to the output file.
-* **Markdown Output:** Generates the book in Markdown format for easy readability and conversion.
-* **File Organization:** Stores generated books in a dedicated "books" directory.
+*   **Dynamic Book Generation:** Creates a book structure based on a user-provided title and TOC prompt.
+*   **AI Integration:** Leverages the power of Google Gemini or models available through OpenRouter for content generation.
+*   **Flexible Configuration:** Uses environment variables for API keys.
+*   **Command-Line Interface:** Allows customization of book title, prompts, AI provider, model, and output via CLI arguments.
+*   **JSON-based TOC:** Uses JSON for structured table of contents generation, making parsing robust.
+*   **Interactive TOC Editing:** Option to pause and manually edit the generated Table of Contents JSON file.
+*   **Error Handling:** Includes error handling for JSON parsing, API issues, and missing keys, logging errors to the output file.
+*   **Markdown Output:** Generates the book in Markdown format for easy readability and conversion.
+*   **File Organization:** Stores generated books in a dedicated "books" directory (customizable via CLI).
 
 ## Prerequisites
 
-* **Python 3.x:** Make sure you have Python 3 installed.
-* **Google Gemini API Key:** You'll need an API key for Google Gemini.
-* **Google Generative AI Library:** Install the necessary library using pip:
-```bash
-pip install google-generativeai
-```
+*   **Python 3.x:** Make sure you have Python 3 installed.
+*   **API Keys:** You'll need an API key for either Google Gemini or OpenRouter, depending on the provider you choose.
+*   **Required Libraries:** Install the necessary libraries using pip:
+    ```bash
+    pip install --user google-generativeai python-dotenv requests tenacity
+    ```
+    *(Note: `google-generativeai` is only strictly needed if using the 'gemini' provider, and `requests` for 'openrouter'. `tenacity` is used for retries.)*
 
 ## Setup
 
-1. **API Key:** Create a file named `api.txt` in the same directory as the script and paste your Google Gemini API key into it.
-2. **Install Dependencies:** Run the following command in your terminal to install the required library:
+1.  **Environment Variables:**
+    *   Copy the `.env.example` file to a new file named `.env` in the project root directory.
+        ```bash
+        cp .env.example .env
+        ```
+    *   Edit the `.env` file and add your API keys:
+        ```dotenv
+        GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
+        OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY_HERE
+        ```
+        *(Only the key for the provider you intend to use is required)*.
+    *   **Important:** The `.env` file is included in `.gitignore` to prevent accidentally committing your keys.
 
-```bash
-pip install google-generativeai
-```
-
-
+2.  **Install Dependencies:** If you haven't already, run the following command in your terminal:
+    ```bash
+    pip install --user google-generativeai python-dotenv requests tenacity
+    ```
 
 ## Usage
 
-**Run the script:**
-```bash
-python main.py
-```
-The script will generate a book based on the example title and TOC prompt defined within the script. You can modify the `book_title` and `toc_prompt` variables to generate different books.
+The script is run from the command line, allowing for various customizations.
 
+**Basic Example (using default OpenRouter provider):**
+
+```bash
+python src/main.py --title "My Awesome Book Title"
+```
+
+**Example using Gemini:**
+
+```bash
+python src/main.py --title "Another Book" --provider gemini --model gemini-1.5-flash-latest
+```
+
+**Example with a custom TOC prompt and interactive editing:**
+
+```bash
+python src/main.py --title "Interactive Book" --toc-prompt "Create a 5-chapter TOC about..." --interactive-toc
+```
+
+**Command-Line Arguments:**
+
+*   `--title` (str, **required**): The title of the book.
+*   `--toc-prompt` (str, optional): A specific prompt for generating the Table of Contents. If omitted, a default prompt will be constructed using the title.
+*   `--provider` (str, optional, choices=['gemini', 'openrouter'], default='openrouter'): The AI provider to use.
+*   `--model` (str, optional): The specific model name for the chosen provider (e.g., 'gemini-1.5-flash-latest', 'google/gemini-flash-1.5', 'mistralai/mistral-7b-instruct'). Check provider documentation for available models.
+*   `--output-dir` (str, optional, default='books'): The directory to save the generated book files.
+*   `--interactive-toc` (flag, optional): Pause execution after TOC generation to allow manual editing of the `<book_title>.json` file before proceeding.
+*   `--browse-after-toc` (flag, optional): Display the current book content (if any) after TOC generation/loading and before generating chapters.
 
 ## Customization
 
-* **`book_title` Variable:** Change this variable to set the desired title of your book.
-* **`toc_prompt` Variable:** Modify this prompt to customize the table of contents.  Ensure the prompt instructs Gemini to return valid JSON in the specified format.
-* **Gemini Model:** The script is currently configured to use `gemini-1.5-flash-8b`. If you have access to other Gemini models, you can change the `model` variable to use them.  For example, uncomment the line for `gemini-1.5-pro-002` and comment out the `gemini-1.5-flash-8b` line.
+Most customization is now handled via the command-line arguments described in the **Usage** section. You can easily change the book title, AI provider, specific model, output directory, and control interactive steps without modifying the Python code.
 
+## Example TOC Prompt Structure
 
+Ensure your `--toc-prompt` (if provided) instructs the AI to return valid JSON in the specified format: a list of dictionaries, where each dictionary represents a chapter and contains 'title' (string) and 'subchapters' (list of strings) keys.
 
-## Example TOC Prompt
-
-The provided example prompt generates a table of contents for a book titled "Quantum Biology 2":
-
+Example snippet for a prompt:
 ```
-f"Create a detailed table of contents for a book titled '{book_title}', including chapter titles and subchapter titles.  Format the output as a valid JSON list of dictionaries, where each dictionary represents a chapter and contains 'title' and 'subchapters' keys. 'subchapters' should be a list of strings. For example:  [{{\"title\": \"Chapter 1: Introduction to Quantum Biology\", \"subchapters\": [\"Quantum Mechanics in Biological Systems\", \"The Role of Quantum Tunneling\"]}}, {{\"title\": \"Chapter 2: Photosynthesis and Quantum Effects\", \"subchapters\": [\"Light Harvesting and Energy Transfer\", \"Quantum Coherence in Photosynthesis\"]}}]"
+... Format the output as a valid JSON list of dictionaries, where each dictionary represents a chapter and contains 'title' and 'subchapters' keys. 'subchapters' should be a list of strings. For example:  [{\"title\": \"Chapter 1: ...\", \"subchapters\": [\"Sub 1.1\", \"Sub 1.2\"]}, {\"title\": \"Chapter 2: ...\", \"subchapters\": [\"Sub 2.1\", \"Sub 2.2\"]}]
 ```
-
-Make sure your prompt is clear and specific to get the desired table of contents structure.
-
 
 ## Output
 
-The generated book will be saved as a Markdown file in the `books` directory.  The filename will be the book title converted to lowercase with spaces replaced by underscores. For example, "Quantum Biology 2" will be saved as `quantum_biology_2.md`.
-
+The generated book will be saved as a Markdown file in the directory specified by `--output-dir` (defaulting to `books`). The filename will be the book title converted to lowercase with spaces replaced by underscores (e.g., `my_awesome_book_title.md`). A corresponding JSON file containing the final Table of Contents structure will also be saved (e.g., `my_awesome_book_title.json`).
 
 ## Error Handling
 
-The script includes error handling for various scenarios, such as invalid JSON responses, API errors, and missing keys in the generated table of contents.  Error messages are printed to the console and also appended to the output Markdown file.
-
+The script includes error handling for various scenarios, such as invalid JSON responses, API errors, missing environment variables, and missing keys in the generated table of contents. Error messages are printed to the console and logged.
 
 ## Future Improvements
 
-* **More Customizable Output:**  Add options to change the output format (e.g., PDF, ePub).
-* **Interactive Prompts:** Allow users to interactively refine the generated content.
-* **Improved Error Handling:** Implement more robust error handling and recovery mechanisms.
+*   **More Output Formats:** Add options to generate PDF, ePub, etc.
+*   **Content Refinement:** Allow interactive refinement of generated chapter/subchapter content.
+*   **Advanced Error Handling:** Implement more robust error recovery.
+*   **Configuration File:** Optionally support a configuration file (e.g., YAML) in addition to CLI args.
 
 ## License
 
-This project is licensed under the [MIT-0 License](../LICENSE).
+This project is licensed under the [MIT-0 License](LICENSE).

@@ -5,16 +5,40 @@ import requests
 import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from config import BookGenerationError, APIConfig
+from config import APIConfig
+from errors import BookGenerationError
 
 class ContentGenerator:
     """Generates content using the Generative AI model."""
-    def __init__(self, model_name: str = 'gemini-1.5-flash-8b'):
-        self.api_config = APIConfig()
+    def __init__(self, api_config: APIConfig, model_name: str):
+        """
+        Initializes ContentGenerator.
+
+        Args:
+            api_config: An initialized APIConfig instance.
+            model_name: The name of the model to use for generation.
+        """
+        self.api_config = api_config
         self.model_name = model_name
+        self.model = None # Initialize model attribute
+
         if self.api_config.api_provider == "gemini":
-            self.model = genai.GenerativeModel(model_name)
-        
+            if not self.model_name:
+                 raise BookGenerationError("Model name must be provided for Gemini provider.")
+            try:
+                # Initialize the Gemini model
+                self.model = genai.GenerativeModel(self.model_name)
+                print(f"Gemini model '{self.model_name}' initialized.")
+            except Exception as e:
+                 raise BookGenerationError(f"Failed to initialize Gemini model '{self.model_name}': {e}")
+        elif self.api_config.api_provider == "openrouter":
+             # For OpenRouter using requests, model initialization isn't done here.
+             # The model name is used directly in the API call payload.
+             if not self.model_name:
+                 raise BookGenerationError("Model name must be provided for OpenRouter provider.")
+             print(f"OpenRouter model set to '{self.model_name}'.")
+        # No need for an else here as APIConfig already validated the provider
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=30),
