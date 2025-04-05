@@ -1,108 +1,89 @@
-# Book Generator with AI
+# Book Generator with Local AI
 
-This Python script uses Google Gemini or other models via OpenRouter to generate books based on a given title and a prompt for the table of contents. It dynamically creates chapters and subchapters based on the generated TOC, writing the content to a Markdown file.
+This Python script uses a local Hugging Face `transformers` model (specifically `distilgpt2` by default) to generate books based on a given title and a prompt for the table of contents. It dynamically creates chapters and subchapters based on the generated TOC, writing the content to a Markdown file.
 
 ## Features
 
 *   **Dynamic Book Generation:** Creates a book structure based on a user-provided title and TOC prompt.
-*   **AI Integration:** Leverages the power of Google Gemini or models available through OpenRouter for content generation.
-*   **Flexible Configuration:** Uses environment variables for API keys.
-*   **Command-Line Interface:** Allows customization of book title, prompts, AI provider, model, and output via CLI arguments.
-*   **JSON-based TOC:** Uses JSON for structured table of contents generation, making parsing robust.
+*   **Local AI Integration:** Leverages the power of Hugging Face `transformers` (using `distilgpt2` by default) for content generation, running entirely offline after the model is downloaded.
+*   **Command-Line Interface:** Allows customization of book title, prompts, and output via CLI arguments.
+*   **JSON-based TOC:** Uses JSON for structured table of contents generation, making parsing robust (though generation quality depends on the model).
 *   **Interactive TOC Editing:** Option to pause and manually edit the generated Table of Contents JSON file.
-*   **Error Handling:** Includes error handling for JSON parsing, API issues, and missing keys, logging errors to the output file.
+*   **Error Handling:** Includes error handling for JSON parsing, model issues, and missing keys, logging errors.
 *   **Markdown Output:** Generates the book in Markdown format for easy readability and conversion.
 *   **File Organization:** Stores generated books in a dedicated "books" directory (customizable via CLI).
 
 ## Prerequisites
 
 *   **Python 3.x:** Make sure you have Python 3 installed.
-*   **API Keys:** You'll need an API key for either Google Gemini or OpenRouter, depending on the provider you choose.
-*   **Required Libraries:** Install the necessary libraries using pip:
-    ```bash
-    pip install --user google-generativeai python-dotenv requests tenacity
-    ```
-    *(Note: `google-generativeai` is only strictly needed if using the 'gemini' provider, and `requests` for 'openrouter'. `tenacity` is used for retries.)*
+*   **Virtual Environment Tool (`uv`):** This project uses `uv` for environment management. Install it if you haven't already (e.g., `pip install --user uv`).
+*   **Required Libraries:** The necessary libraries (`transformers`, `torch`, `pytest`, `tenacity`) will be installed into a virtual environment.
 
 ## Setup
 
-1.  **Environment Variables:**
-    *   Copy the `.env.example` file to a new file named `.env` in the project root directory.
-        ```bash
-        cp .env.example .env
-        ```
-    *   Edit the `.env` file and add your API keys:
-        ```dotenv
-        GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
-        OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY_HERE
-        ```
-        *(Only the key for the provider you intend to use is required)*.
-    *   **Important:** The `.env` file is included in `.gitignore` to prevent accidentally committing your keys.
-
-2.  **Install Dependencies:** If you haven't already, run the following command in your terminal:
+1.  **Create Virtual Environment:** Navigate to the project root directory in your terminal and create a `uv` environment:
     ```bash
-    pip install --user google-generativeai python-dotenv requests tenacity
+    python -m uv venv .venv
     ```
+
+2.  **Install Dependencies:** Install the required packages into the virtual environment using `uv`. This command ensures `pip` is available, installs `uv` inside the venv, and then installs the project dependencies:
+    ```bash
+    .venv/Scripts/python.exe -m ensurepip ; .venv/Scripts/python.exe -m pip install uv ; .venv/Scripts/python.exe -m uv pip install transformers torch pytest tenacity
+    ```
+    *(Note: The first time you run the script or tests, the `distilgpt2` model will be downloaded automatically by the `transformers` library.)*
 
 ## Usage
 
-The script is run from the command line, allowing for various customizations.
+The script is run from the command line using the Python interpreter within the virtual environment.
 
-**Basic Example (using default OpenRouter provider):**
-
-```bash
-python src/main.py --title "My Awesome Book Title"
-```
-
-**Example using Gemini:**
+**Basic Example:**
 
 ```bash
-python src/main.py --title "Another Book" --provider gemini --model gemini-1.5-flash-latest
+.venv/Scripts/python.exe src/main.py --title "My Locally Generated Book"
 ```
 
 **Example with a custom TOC prompt and interactive editing:**
 
 ```bash
-python src/main.py --title "Interactive Book" --toc-prompt "Create a 5-chapter TOC about..." --interactive-toc
+.venv/Scripts/python.exe src/main.py --title "Interactive Local Book" --toc-prompt "Create a 3-chapter TOC about local AI models..." --interactive-toc
 ```
 
 **Command-Line Arguments:**
 
 *   `--title` (str, **required**): The title of the book.
-*   `--toc-prompt` (str, optional): A specific prompt for generating the Table of Contents. If omitted, a default prompt will be constructed using the title.
-*   `--provider` (str, optional, choices=['gemini', 'openrouter'], default='openrouter'): The AI provider to use.
-*   `--model` (str, optional): The specific model name for the chosen provider (e.g., 'gemini-1.5-flash-latest', 'google/gemini-flash-1.5', 'mistralai/mistral-7b-instruct'). Check provider documentation for available models.
+*   `--toc-prompt` (str, optional): A specific prompt for generating the Table of Contents. If omitted, a default prompt is used. *Note: The default `distilgpt2` model may struggle with complex JSON generation; keep prompts simple or be prepared to edit the TOC interactively.*
 *   `--output-dir` (str, optional, default='books'): The directory to save the generated book files.
 *   `--interactive-toc` (flag, optional): Pause execution after TOC generation to allow manual editing of the `<book_title>.json` file before proceeding.
 *   `--browse-after-toc` (flag, optional): Display the current book content (if any) after TOC generation/loading and before generating chapters.
 
 ## Customization
 
-Most customization is now handled via the command-line arguments described in the **Usage** section. You can easily change the book title, AI provider, specific model, output directory, and control interactive steps without modifying the Python code.
+Most customization is handled via the command-line arguments described in the **Usage** section. You can change the book title, output directory, and control interactive steps without modifying the Python code. The underlying AI model (`distilgpt2`) can be changed by modifying the `model_name` default in `src/content_generation.py`.
 
 ## Example TOC Prompt Structure
 
-Ensure your `--toc-prompt` (if provided) instructs the AI to return valid JSON in the specified format: a list of dictionaries, where each dictionary represents a chapter and contains 'title' (string) and 'subchapters' (list of strings) keys.
+Ensure your `--toc-prompt` (if provided) instructs the AI to return valid JSON in the specified format: a list of dictionaries, where each dictionary represents a chapter and contains 'title' (string) and 'subchapters' (list of strings) keys. Keep the structure simple for better results with smaller models like `distilgpt2`.
 
 Example snippet for a prompt:
 ```
-... Format the output as a valid JSON list of dictionaries, where each dictionary represents a chapter and contains 'title' and 'subchapters' keys. 'subchapters' should be a list of strings. For example:  [{\"title\": \"Chapter 1: ...\", \"subchapters\": [\"Sub 1.1\", \"Sub 1.2\"]}, {\"title\": \"Chapter 2: ...\", \"subchapters\": [\"Sub 2.1\", \"Sub 2.2\"]}]
+... Format the output as a valid JSON list of dictionaries. Each dictionary must have 'title' and 'subchapters' keys. 'subchapters' should be a list of strings. Output ONLY the JSON list. For example:  [{\"title\": \"Chapter 1: ...\", \"subchapters\": [\"Sub 1.1\", \"Sub 1.2\"]}, {\"title\": \"Chapter 2: ...\", \"subchapters\": [\"Sub 2.1\"]}]
 ```
 
 ## Output
 
-The generated book will be saved as a Markdown file in the directory specified by `--output-dir` (defaulting to `books`). The filename will be the book title converted to lowercase with spaces replaced by underscores (e.g., `my_awesome_book_title.md`). A corresponding JSON file containing the final Table of Contents structure will also be saved (e.g., `my_awesome_book_title.json`).
+The generated book will be saved as a Markdown file in the directory specified by `--output-dir` (defaulting to `books`). The filename will be the book title converted to lowercase with spaces replaced by underscores (e.g., `my_locally_generated_book.md`). A corresponding JSON file containing the final Table of Contents structure will also be saved (e.g., `my_locally_generated_book.json`).
 
 ## Error Handling
 
-The script includes error handling for various scenarios, such as invalid JSON responses, API errors, missing environment variables, and missing keys in the generated table of contents. Error messages are printed to the console and logged.
+The script includes error handling for various scenarios, such as invalid JSON responses, model loading/generation errors, and missing keys in the generated table of contents. Error messages are printed to the console and logged.
 
 ## Future Improvements
 
 *   **More Output Formats:** Add options to generate PDF, ePub, etc.
 *   **Content Refinement:** Allow interactive refinement of generated chapter/subchapter content.
 *   **Advanced Error Handling:** Implement more robust error recovery.
-*   **Configuration File:** Optionally support a configuration file (e.g., YAML) in addition to CLI args.
+*   **Model Selection:** Re-introduce CLI argument to select different local models.
+*   **GPU Support:** Add option/detection for running inference on GPU if available.
 
 ## License
 

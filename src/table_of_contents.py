@@ -33,14 +33,18 @@ class TableOfContents:
     
     @staticmethod
     def _clean_response(content: str) -> str:
-        """Cleans the API response from any wrapper tokens."""
-        wrappers = ['```python', '```json', '```']
-        for wrapper in wrappers:
-            if content.startswith(wrapper):
-                content = content[len(wrapper):]
-        if content.endswith('```'):
-            content = content[:-3]
-        return content.strip()
+        """Cleans the API response from any wrapper tokens and surrounding whitespace."""
+        import re
+        # Regex to find optional ```json, ```python, or ```, capture the content, and match optional ``` at the end
+        # It handles leading/trailing whitespace around the fences and the content itself.
+        # Using re.DOTALL so '.' matches newline characters.
+        match = re.match(r'^\s*(?:```(?:json|python)?\s*)?(.*?)(?:\s*```\s*)?$', content, re.DOTALL | re.IGNORECASE)
+        if match:
+            # Return the captured group (the content inside), stripped of leading/trailing whitespace
+            return match.group(1).strip()
+        else:
+            # If no fences are found, just strip the original content
+            return content.strip()
     
     def _assign_numbers(self):
         """Assigns chapter numbers to all chapters."""
