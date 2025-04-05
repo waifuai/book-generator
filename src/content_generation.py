@@ -19,8 +19,8 @@ class ContentGenerator:
         self.model_name = model_name
         try:
             # Initialize the text generation pipeline
-            # Using device=-1 forces CPU, change to 0 for default GPU if available and configured
-            self.generator = pipeline('text-generation', model=self.model_name, device=-1)
+            # Using device=0 for default GPU, change to -1 for CPU if needed
+            self.generator = pipeline('text-generation', model=self.model_name, device=0)
             # Get the EOS token ID from the tokenizer
             self.eos_token_id = self.generator.tokenizer.eos_token_id
             # Explicitly set pad_token_id if it's None (common for GPT-2 models)

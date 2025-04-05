@@ -31,7 +31,7 @@ class TestContentGenerator(unittest.TestCase):
 
         generator = ContentGenerator(model_name="distilgpt2-test")
 
-        mock_pipeline.assert_called_once_with('text-generation', model="distilgpt2-test", device=-1)
+        mock_pipeline.assert_called_once_with('text-generation', model="distilgpt2-test", device=0)
         self.assertEqual(generator.model_name, "distilgpt2-test")
         self.assertEqual(generator.generator, mock_generator_instance)
         self.assertEqual(generator.eos_token_id, 50256)
