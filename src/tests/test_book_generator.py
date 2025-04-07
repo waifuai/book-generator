@@ -9,12 +9,12 @@ import logging
 # import sys
 # sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Use absolute imports relative to src for tests
-from book_generator import BookGenerator
-from book_writer import BookWriter
-from table_of_contents import TableOfContents, Chapter
-from content_generation import ContentGenerator
-from errors import BookGenerationError
+# Use relative imports from the test module's perspective
+from ..book_generator import BookGenerator
+from ..book_writer import BookWriter
+from ..table_of_contents import TableOfContents, Chapter
+from ..content_generation import ContentGenerator
+from ..errors import BookGenerationError
 
 # Suppress logging during tests
 logging.disable(logging.CRITICAL)
@@ -40,7 +40,7 @@ class TestBookGenerator(unittest.TestCase):
         self.mock_writer.get_filepath.return_value = expected_filepath
 
         # Patch TableOfContents within the book_generator module where it's used
-        with patch('book_generator.TableOfContents') as MockTOC:
+        with patch('src.book_generator.TableOfContents') as MockTOC:
             mock_toc_instance = MockTOC.return_value
             toc = self.generator.generate_toc(title, toc_prompt)
 

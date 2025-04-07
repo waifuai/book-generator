@@ -1,7 +1,7 @@
 from pathlib import Path
 
-# Use absolute import relative to src
-from table_of_contents import Chapter
+# Use relative import within the src package
+from .table_of_contents import Chapter
 
 class BookWriter:
     """Writes the book content to a file."""

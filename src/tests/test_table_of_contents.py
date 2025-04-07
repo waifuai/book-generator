@@ -7,8 +7,8 @@ import json
 # from pathlib import Path
 # sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from table_of_contents import TableOfContents, Chapter
-from errors import BookGenerationError
+from ..table_of_contents import TableOfContents, Chapter
+from ..errors import BookGenerationError
 
 class TestTableOfContents(unittest.TestCase):
 

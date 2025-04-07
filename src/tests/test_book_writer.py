@@ -7,9 +7,9 @@ from pathlib import Path
 # import sys
 # sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from book_writer import BookWriter
+from ..book_writer import BookWriter
 # Need Chapter for type hinting in tests, even if not directly instantiated here
-from table_of_contents import Chapter, TableOfContents
+from ..table_of_contents import Chapter, TableOfContents
 
 class TestBookWriter(unittest.TestCase):
 
@@ -56,8 +56,8 @@ class TestBookWriter(unittest.TestCase):
         handle.write.assert_any_call(f"{content}\n\n")
 
 
-    @patch('book_writer.Path.open', new_callable=mock_open) # Patch Path.open in book_writer module
-    @patch('book_writer.Path.mkdir')
+    @patch('src.book_writer.Path.open', new_callable=mock_open) # Patch Path.open in src.book_writer module
+    @patch('src.book_writer.Path.mkdir')
     def test_write_subchapter(self, mock_mkdir, mock_open_method): # Renamed mock_file -> mock_open_method
         """Test writing a subchapter to the file."""
         writer = BookWriter("test_output")
@@ -78,8 +78,8 @@ class TestBookWriter(unittest.TestCase):
         handle.write.assert_any_call("[Back to Main Table of Contents](#table-of-contents)\n\n")
         handle.write.assert_any_call(f"{content}\n\n")
 
-    @patch('book_writer.Path.open', new_callable=mock_open) # Patch Path.open in book_writer module
-    @patch('book_writer.Path.mkdir')
+    @patch('src.book_writer.Path.open', new_callable=mock_open) # Patch Path.open in src.book_writer module
+    @patch('src.book_writer.Path.mkdir')
     def test_write_toc(self, mock_mkdir, mock_open_method): # Renamed mock_file -> mock_open_method
         """Test writing the main table of contents."""
         writer = BookWriter("test_output")

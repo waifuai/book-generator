@@ -3,9 +3,9 @@ import google.generativeai as genai
 # Removed Tool and GoogleSearchRetrieval imports
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-# Use absolute imports relative to src
-from errors import BookGenerationError
-from config import APIConfig # Import APIConfig
+# Use relative imports within the src package
+from .errors import BookGenerationError
+from .config import APIConfig # Import APIConfig
 class ContentGenerator:
     """Generates content using the Google Generative AI API."""
     def __init__(self, config: APIConfig, model_name: str = "models/gemini-2.0-flash"):

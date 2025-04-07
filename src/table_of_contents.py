@@ -2,8 +2,8 @@ import json
 from dataclasses import dataclass
 from typing import List
 
-# Use absolute import relative to src
-from errors import BookGenerationError
+# Use relative import within the src package
+from .errors import BookGenerationError
 
 @dataclass
 class Chapter:

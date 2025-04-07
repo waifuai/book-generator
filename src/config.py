@@ -2,8 +2,8 @@
 import os
 import google.generativeai as genai
 from pathlib import Path
-# Use absolute import relative to src
-from errors import BookGenerationError
+# Use relative import within the src package
+from .errors import BookGenerationError
 
 class APIConfig:
     """Loads and configures the Google Generative AI API key."""

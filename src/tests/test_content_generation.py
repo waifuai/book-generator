@@ -10,9 +10,9 @@ from google.api_core import exceptions as api_core_exceptions # Import google-ap
 # from pathlib import Path
 # sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from content_generation import ContentGenerator
-from errors import BookGenerationError
-from config import APIConfig # Need APIConfig for initialization
+from ..content_generation import ContentGenerator
+from ..errors import BookGenerationError
+from ..config import APIConfig # Need APIConfig for initialization
 
 # Suppress googleapiclient discovery_cache errors during tests
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
@@ -27,7 +27,7 @@ class TestContentGenerator(unittest.TestCase):
         self.mock_api_config.api_key = "fake-api-key" # Provide a dummy key
 
     # Removed Tool and GoogleSearchRetrieval mocks
-    @patch('content_generation.genai.GenerativeModel')
+    @patch('src.content_generation.genai.GenerativeModel')
     def test_init_success(self, mock_generative_model):
         """Test successful initialization (search functionality removed)."""
         mock_model_instance = MagicMock()
@@ -53,7 +53,7 @@ class TestContentGenerator(unittest.TestCase):
 
     # test_init_success_search_enabled was removed.
 
-    @patch('content_generation.genai.GenerativeModel')
+    @patch('src.content_generation.genai.GenerativeModel')
     def test_init_failure(self, mock_generative_model):
         """Test handling of Gemini initialization failure."""
         mock_generative_model.side_effect = Exception("Model connection failed")
@@ -64,7 +64,7 @@ class TestContentGenerator(unittest.TestCase):
         self.assertIn("Failed to initialize Gemini model 'invalid-gemini-model'", str(context.exception))
         self.assertIn("Model connection failed", str(context.exception))
 
-    @patch('content_generation.genai.GenerativeModel')
+    @patch('src.content_generation.genai.GenerativeModel')
     def test_generate_content_success(self, mock_generative_model):
         """Test successful content generation."""
         # Mock the model instance and its generate_content method
@@ -88,7 +88,7 @@ class TestContentGenerator(unittest.TestCase):
         self.assertEqual(result, "Generated content from Gemini.")
         mock_model_instance.generate_content.assert_called_once_with("Test prompt for Gemini")
 
-    @patch('content_generation.genai.GenerativeModel')
+    @patch('src.content_generation.genai.GenerativeModel')
     def test_generate_content_empty_response(self, mock_generative_model):
         """Test handling of an empty response from Gemini."""
         mock_model_instance = MagicMock()
@@ -118,7 +118,7 @@ class TestContentGenerator(unittest.TestCase):
         mock_model_instance.generate_content.assert_called_with("Risky prompt")
 
 
-    @patch('content_generation.genai.GenerativeModel')
+    @patch('src.content_generation.genai.GenerativeModel')
     def test_generate_content_retry(self, mock_generative_model):
         """Test retry logic for Gemini API calls."""
         mock_model_instance = MagicMock()
