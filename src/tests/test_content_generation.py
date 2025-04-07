@@ -26,49 +26,103 @@ class TestContentGenerator(unittest.TestCase):
         self.mock_api_config = MagicMock(spec=APIConfig)
         self.mock_api_config.api_key = "fake-api-key" # Provide a dummy key
 
+    @patch('content_generation.Tool')
+    @patch('content_generation.GoogleSearchRetrieval')
     @patch('content_generation.genai.GenerativeModel')
-    def test_init_success(self, mock_generative_model):
-        """Test successful initialization of ContentGenerator with Gemini."""
+    def test_init_success_search_disabled(self, mock_generative_model, mock_search_retrieval, mock_tool):
+        """Test successful initialization with search disabled (default)."""
         mock_model_instance = MagicMock()
         mock_generative_model.return_value = mock_model_instance
 
-        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test")
+        # Initialize with enable_search=False (or default)
+        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test", enable_search=False)
 
-        mock_generative_model.assert_called_once_with(model_name="models/gemini-test")
+        # Assert GenerativeModel called correctly
+        mock_generative_model.assert_called_once()
+        call_args, call_kwargs = mock_generative_model.call_args
+        self.assertEqual(call_kwargs.get('model_name'), "models/gemini-test")
+        # Assert tools list is empty when search is disabled
+        self.assertEqual(call_kwargs.get('tools'), [])
+
+        # Assert search tool classes were NOT instantiated
+        mock_search_retrieval.assert_not_called()
+        mock_tool.assert_not_called()
+
+        # Assert generator attributes
         self.assertEqual(generator.model_name, "models/gemini-test")
         self.assertEqual(generator.model, mock_model_instance)
         self.assertEqual(generator.config, self.mock_api_config)
+        self.assertFalse(generator.enable_search)
+
+    # Add a new test for initialization with search enabled
+    @patch('content_generation.Tool')
+    @patch('content_generation.GoogleSearchRetrieval')
+    @patch('content_generation.genai.GenerativeModel')
+    def test_init_success_search_enabled(self, mock_generative_model, mock_search_retrieval, mock_tool):
+        """Test successful initialization with search enabled."""
+        mock_model_instance = MagicMock()
+        mock_generative_model.return_value = mock_model_instance
+        mock_search_tool_instance = MagicMock()
+        mock_tool.return_value = mock_search_tool_instance
+
+        # Initialize with enable_search=True
+        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-pro", enable_search=True)
+
+        # Assert search tool classes were instantiated
+        mock_search_retrieval.assert_called_once()
+        mock_tool.assert_called_once_with(google_search_retrieval=mock_search_retrieval.return_value)
+
+        # Assert GenerativeModel called correctly
+        mock_generative_model.assert_called_once()
+        call_args, call_kwargs = mock_generative_model.call_args
+        self.assertEqual(call_kwargs.get('model_name'), "models/gemini-pro")
+        # Assert tools list contains the mocked search tool instance
+        self.assertEqual(call_kwargs.get('tools'), [mock_search_tool_instance])
+
+        # Assert generator attributes
+        self.assertEqual(generator.model_name, "models/gemini-pro")
+        self.assertEqual(generator.model, mock_model_instance)
+        self.assertEqual(generator.config, self.mock_api_config)
+        self.assertTrue(generator.enable_search)
+
 
     @patch('content_generation.genai.GenerativeModel')
     def test_init_failure(self, mock_generative_model):
         """Test handling of Gemini initialization failure."""
         mock_generative_model.side_effect = Exception("Model connection failed")
 
-        with self.assertRaises(BookGenerationError) as context:
-            ContentGenerator(config=self.mock_api_config, model_name="invalid-gemini-model")
-        self.assertIn("Failed to initialize Gemini model", str(context.exception))
-        self.assertIn("Model connection failed", str(context.exception))
+        # Test failure with search disabled
+        with self.assertRaises(BookGenerationError) as context_disabled:
+            ContentGenerator(config=self.mock_api_config, model_name="invalid-gemini-model", enable_search=False)
+        self.assertIn("Failed to initialize Gemini model 'invalid-gemini-model' without search tool", str(context_disabled.exception))
+        self.assertIn("Model connection failed", str(context_disabled.exception))
+
+        # Test failure with search enabled
+        with self.assertRaises(BookGenerationError) as context_enabled:
+            ContentGenerator(config=self.mock_api_config, model_name="invalid-gemini-model", enable_search=True)
+        self.assertIn("Failed to initialize Gemini model 'invalid-gemini-model' with search tool", str(context_enabled.exception))
+        self.assertIn("Model connection failed", str(context_enabled.exception))
 
     @patch('content_generation.genai.GenerativeModel')
     def test_generate_content_success(self, mock_generative_model):
-        """Test successful content generation with Gemini."""
+        """Test successful content generation (search disabled)."""
         # Mock the model instance and its generate_content method
         mock_model_instance = MagicMock()
         mock_response = MagicMock()
-        # Simulate the response structure: candidates -> content -> parts -> text
-        # Using .text attribute directly is simpler if the mock supports it well
         mock_response.text = "Generated content from Gemini."
-        # Ensure candidates and parts exist for the check in generate_content
         mock_candidate = MagicMock()
         mock_part = MagicMock()
         mock_part.text = "Generated content from Gemini."
         mock_candidate.content.parts = [mock_part]
+        # Simulate no citation metadata when search is disabled/not used
+        mock_candidate.citation_metadata = None
         mock_response.candidates = [mock_candidate]
 
         mock_model_instance.generate_content.return_value = mock_response
         mock_generative_model.return_value = mock_model_instance
 
-        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test")
+        # Initialize with search disabled
+        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test", enable_search=False)
         result = generator.generate_content("Test prompt for Gemini")
 
         self.assertEqual(result, "Generated content from Gemini.")
@@ -80,40 +134,27 @@ class TestContentGenerator(unittest.TestCase):
         mock_model_instance = MagicMock()
         mock_response = MagicMock()
         mock_response.candidates = [] # Simulate no candidates
-        mock_response.text = "" # .text would likely be empty too
-        # Add mock prompt_feedback
+        mock_response.text = ""
         mock_feedback = MagicMock()
         mock_feedback.block_reason = "SAFETY"
         mock_feedback.block_reason_message = "Blocked due to safety concerns."
         mock_response.prompt_feedback = mock_feedback
 
-        # Simulate the exception being raised within the generate_content method
-        # This needs to happen *after* the check for candidates/parts
-        def side_effect_func(*args, **kwargs):
-            # First check if the response indicates blocking
-            if not mock_response.candidates: # Simplified check
-                 if hasattr(mock_response, 'prompt_feedback') and hasattr(mock_response.prompt_feedback, 'block_reason'):
-                     raise BookGenerationError(f"Content generation blocked. Reason: {mock_response.prompt_feedback.block_reason}. Details: {getattr(mock_response.prompt_feedback, 'block_reason_message', 'N/A')}")
-                 raise BookGenerationError("Received an empty response from the Gemini API.")
-            # Check parts if candidates exist
-            if not mock_response.candidates[0].content.parts:
-                 raise BookGenerationError("Received an empty response (no parts) from the Gemini API.")
-
-            return mock_response # Should not be reached in this test case path
-
-        mock_model_instance.generate_content.side_effect = side_effect_func
+        # Use a simple side effect for the mock
+        mock_model_instance.generate_content.return_value = mock_response
         mock_generative_model.return_value = mock_model_instance
 
-        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test")
+        # Initialize with search disabled
+        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test", enable_search=False)
 
         with self.assertRaises(BookGenerationError) as context:
             generator.generate_content("Risky prompt")
 
-        # Check for specific block reason message in the final exception
+        # Check for specific block reason message
+        # The retry logic will re-raise the final BookGenerationError from the source code
         self.assertIn("Content generation blocked. Reason: SAFETY", str(context.exception))
-        # Check that the mocked method was called 3 times due to retry
+        # Check retry happened
         self.assertEqual(mock_model_instance.generate_content.call_count, 3)
-        # Optionally, check the arguments of the last call (or any call)
         mock_model_instance.generate_content.assert_called_with("Risky prompt")
 
 
@@ -121,15 +162,16 @@ class TestContentGenerator(unittest.TestCase):
     def test_generate_content_retry(self, mock_generative_model):
         """Test retry logic for Gemini API calls."""
         mock_model_instance = MagicMock()
-        # Simulate failure on first calls, success on the last if retry is working
+        # Simulate retryable errors then a final non-retryable one if needed, or just fail always
         mock_model_instance.generate_content.side_effect = [
-            api_core_exceptions.ServiceUnavailable("API unavailable"), # Use google-api-core exception
-            api_core_exceptions.DeadlineExceeded("Timeout"), # Another potentially retryable error
-            Exception("Final API error") # Should fail after retries
+            api_core_exceptions.ServiceUnavailable("API unavailable"),
+            api_core_exceptions.DeadlineExceeded("Timeout"),
+            Exception("Final API error") # This will be wrapped by BookGenerationError
         ]
         mock_generative_model.return_value = mock_model_instance
 
-        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test")
+        # Initialize with search disabled
+        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test", enable_search=False)
 
         with self.assertRaises(BookGenerationError) as context:
             generator.generate_content("test prompt")

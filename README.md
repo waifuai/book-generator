@@ -1,11 +1,11 @@
 # Book Generator with Google Gemini
 
-This Python script uses the Google Gemini API (specifically `gemini-2.5-pro-preview-03-25` by default, with search tool enabled) to generate books based on a given title and a prompt for the table of contents. It dynamically creates chapters and subchapters based on the generated TOC, writing the content to a Markdown file.
+This Python script uses the Google Gemini API (specifically `gemini-2.5-pro-exp-03-25` by default, with search tool enabled) to generate books based on a given title and a prompt for the table of contents. It dynamically creates chapters and subchapters based on the generated TOC, writing the content to a Markdown file.
 
 ## Features
 
 *   **Dynamic Book Generation:** Creates a book structure based on a user-provided title and TOC prompt.
-*   **Gemini API Integration:** Leverages the power of Google Gemini models (using `gemini-2.5-pro-preview-03-25` by default) for content generation, including web search grounding via the search tool.
+*   **Gemini API Integration:** Leverages the power of Google Gemini models (using `gemini-2.5-pro-exp-03-25` by default) for content generation, including web search grounding via the search tool.
 *   **Command-Line Interface:** Allows customization of book title, prompts, model, API key location, and output via CLI arguments.
 *   **JSON-based TOC:** Uses JSON for structured table of contents generation.
 *   **Interactive TOC Editing:** Option to pause and manually edit the generated Table of Contents JSON file.
@@ -54,9 +54,10 @@ The script is run from the command line using the Python interpreter within the 
 
 *   `--title` (str, **required**): The title of the book.
 *   `--toc-prompt` (str, optional): A specific prompt for generating the Table of Contents. If omitted, a default prompt is used.
-*   `--model` (str, optional, default='models/gemini-2.5-pro-preview-03-25'): The Gemini model to use (e.g., 'models/gemini-1.5-flash', 'models/gemini-pro').
+*   `--model` (str, optional, default='models/gemini-2.5-pro-exp-03-25'): The Gemini model to use (e.g., 'models/gemini-1.5-flash', 'models/gemini-pro').
 *   `--api-key-file` (str, optional, default='~/.api-gemini'): Path to the file containing the Gemini API key.
 *   `--output-dir` (str, optional, default='books'): The directory to save the generated book files.
+*   `--enable-search` (flag, optional): Enable the Google Search tool for the Gemini model (requires a compatible model like 'gemini-1.5-pro-latest' or preview versions). Disabled by default.
 *   `--interactive-toc` (flag, optional): Pause execution after TOC generation to allow manual editing of the `<book_title>.json` file before proceeding.
 *   `--browse-after-toc` (flag, optional): Display the current book content (if any) after TOC generation/loading and before generating chapters.
 

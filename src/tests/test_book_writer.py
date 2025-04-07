@@ -13,7 +13,7 @@ from table_of_contents import Chapter, TableOfContents
 
 class TestBookWriter(unittest.TestCase):
 
-    @patch('book_writer.Path.mkdir') # Mock mkdir
+    @patch('src.book_writer.Path.mkdir') # Mock mkdir in src.book_writer
     def test_init_and_get_filepath(self, mock_mkdir):
         """Test initialization creates directory and get_filepath works."""
         writer = BookWriter("test_output_dir")
@@ -30,8 +30,8 @@ class TestBookWriter(unittest.TestCase):
         self.assertEqual(writer.get_filepath(title_with_trailing), expected_filepath_trailing)
 
 
-    @patch('book_writer.Path.open', new_callable=mock_open) # Patch Path.open in book_writer module
-    @patch('book_writer.Path.mkdir') # Still need to mock mkdir for init
+    @patch('src.book_writer.Path.open', new_callable=mock_open) # Patch Path.open in src.book_writer module
+    @patch('src.book_writer.Path.mkdir') # Still need to mock mkdir for init
     def test_write_chapter(self, mock_mkdir, mock_open_method): # Renamed mock_file -> mock_open_method
         """Test writing a chapter to the file."""
         writer = BookWriter("test_output")

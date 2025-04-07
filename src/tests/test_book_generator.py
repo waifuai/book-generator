@@ -9,10 +9,11 @@ import logging
 # import sys
 # sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Use absolute imports relative to src for tests
 from book_generator import BookGenerator
 from book_writer import BookWriter
 from table_of_contents import TableOfContents, Chapter
-from content_generation import ContentGenerator # Keep this import for mocking
+from content_generation import ContentGenerator
 from errors import BookGenerationError
 
 # Suppress logging during tests
@@ -38,7 +39,7 @@ class TestBookGenerator(unittest.TestCase):
         expected_filepath = Path("test_output/my_awesome_book.md")
         self.mock_writer.get_filepath.return_value = expected_filepath
 
-        # Patch TableOfContents to control its instance and methods
+        # Patch TableOfContents within the book_generator module where it's used
         with patch('book_generator.TableOfContents') as MockTOC:
             mock_toc_instance = MockTOC.return_value
             toc = self.generator.generate_toc(title, toc_prompt)
@@ -70,8 +71,8 @@ class TestBookGenerator(unittest.TestCase):
         self.mock_writer.write_toc.assert_not_called()
 
 
-    @patch('book_generator.Path.open', new_callable=mock_open) # Patch Path.open in book_generator module
-    @patch('book_generator.Path.with_suffix')
+    @patch('src.book_generator.Path.open', new_callable=mock_open) # Patch Path.open in src.book_generator module
+    @patch('src.book_generator.Path.with_suffix')
     def test_save_toc(self, mock_with_suffix, mock_open_method):
         """Test saving the table of contents to a JSON file."""
         # Setup
@@ -91,9 +92,9 @@ class TestBookGenerator(unittest.TestCase):
         handle.write.assert_called_once_with('{"title": "Saved Chapter", "subchapters": [], "number": 1}')
         self.generator.toc.to_json.assert_called_once()
 
-    @patch('book_generator.Path.open', new_callable=mock_open) # Patch Path.open in book_generator module
-    @patch('book_generator.Path.is_file')
-    @patch('book_generator.Path.with_suffix')
+    @patch('src.book_generator.Path.open', new_callable=mock_open) # Patch Path.open in src.book_generator module
+    @patch('src.book_generator.Path.is_file')
+    @patch('src.book_generator.Path.with_suffix')
     def test_load_toc_success(self, mock_with_suffix, mock_is_file, mock_open_method):
         """Test loading the table of contents from a JSON file."""
         # Setup
@@ -129,8 +130,8 @@ class TestBookGenerator(unittest.TestCase):
              self.generator.filepath, self.generator.book_title, self.generator.toc
         )
 
-    @patch('book_generator.Path.is_file')
-    @patch('book_generator.Path.with_suffix')
+    @patch('src.book_generator.Path.is_file')
+    @patch('src.book_generator.Path.with_suffix')
     def test_load_toc_file_not_found(self, mock_with_suffix, mock_is_file):
         """Test loading TOC when the JSON file doesn't exist."""
         self.generator.filepath = Path("test_output/my_book.md")
