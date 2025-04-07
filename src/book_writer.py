@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from table_of_contents import Chapter
+from .table_of_contents import Chapter
 
 class BookWriter:
     """Writes the book content to a file."""

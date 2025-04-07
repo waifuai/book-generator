@@ -12,7 +12,7 @@ import logging
 from book_generator import BookGenerator
 from book_writer import BookWriter
 from table_of_contents import TableOfContents, Chapter
-from content_generation import ContentGenerator
+from content_generation import ContentGenerator # Keep this import for mocking
 from errors import BookGenerationError
 
 # Suppress logging during tests
@@ -22,6 +22,7 @@ class TestBookGenerator(unittest.TestCase):
 
     def setUp(self):
         # Mock dependencies passed to BookGenerator
+        # Mock ContentGenerator (now assumed to be Gemini-based)
         self.mock_content_generator = MagicMock(spec=ContentGenerator)
         self.mock_writer = MagicMock(spec=BookWriter)
         # Create the generator instance for tests
@@ -31,7 +32,7 @@ class TestBookGenerator(unittest.TestCase):
         """Test successful generation and writing of TOC."""
         title = "My Awesome Book"
         toc_prompt = "Generate TOC for My Awesome Book"
-        # Simulate a simple, valid JSON response (distilgpt2 might not be perfect)
+        # Simulate a simple, valid JSON response (expected from Gemini)
         mock_toc_content = '[{"title": "Chapter 1", "subchapters": ["Intro"]}]'
         self.mock_content_generator.generate_content.return_value = mock_toc_content
         expected_filepath = Path("test_output/my_awesome_book.md")
@@ -71,7 +72,7 @@ class TestBookGenerator(unittest.TestCase):
 
     @patch('book_generator.Path.open', new_callable=mock_open) # Patch Path.open in book_generator module
     @patch('book_generator.Path.with_suffix')
-    def test_save_toc(self, mock_with_suffix, mock_open_method): # Renamed mock_file -> mock_open_method
+    def test_save_toc(self, mock_with_suffix, mock_open_method):
         """Test saving the table of contents to a JSON file."""
         # Setup
         self.generator.toc = MagicMock(spec=TableOfContents)
@@ -85,7 +86,6 @@ class TestBookGenerator(unittest.TestCase):
 
         # Assertions
         mock_with_suffix.assert_called_once_with(".json")
-        # Check that the mocked Path's open method was called (without the path object itself)
         mock_open_method.assert_called_once_with("w", encoding="utf-8")
         handle = mock_open_method() # Get the handle from the mock
         handle.write.assert_called_once_with('{"title": "Saved Chapter", "subchapters": [], "number": 1}')
@@ -94,14 +94,14 @@ class TestBookGenerator(unittest.TestCase):
     @patch('book_generator.Path.open', new_callable=mock_open) # Patch Path.open in book_generator module
     @patch('book_generator.Path.is_file')
     @patch('book_generator.Path.with_suffix')
-    def test_load_toc_success(self, mock_with_suffix, mock_is_file, mock_open_method): # Renamed mock_file -> mock_open_method
+    def test_load_toc_success(self, mock_with_suffix, mock_is_file, mock_open_method):
         """Test loading the table of contents from a JSON file."""
         # Setup
         self.generator.filepath = Path("test_output/my_book.md")
         self.generator.book_title = "My Awesome Book"
         # Use a real TOC instance to test update_from_json
         self.generator.toc = TableOfContents('[{"title":"Initial","subchapters":[]}]')
-        # Spy on the update method if needed, or let it run
+        # Spy on the update method
         update_spy = MagicMock(side_effect=self.generator.toc.update_from_json)
         self.generator.toc.update_from_json = update_spy
 
@@ -145,7 +145,6 @@ class TestBookGenerator(unittest.TestCase):
         mock_with_suffix.assert_called_once_with(".json")
         mock_is_file.assert_called_once_with()
         # Ensure update_from_json and write_toc were NOT called
-        # Need to access the mock attached to the instance if it exists
         if hasattr(self.generator.toc, 'update_from_json') and isinstance(self.generator.toc.update_from_json, MagicMock):
              self.generator.toc.update_from_json.assert_not_called()
         self.mock_writer.write_toc.assert_not_called()
@@ -154,11 +153,9 @@ class TestBookGenerator(unittest.TestCase):
     def test_generate_book_success(self):
         """Test successful generation of the entire book."""
         # Setup
-        # Use a real TOC with mock chapters for simplicity
         self.generator.toc = MagicMock(spec=TableOfContents)
         self.generator.filepath = Path("test_output/my_book.md")
         self.generator.book_title = "My Awesome Book"
-        # Use MagicMocks for chapters to avoid full Chapter setup
         chapter1 = MagicMock(spec=Chapter)
         chapter2 = MagicMock(spec=Chapter)
         self.generator.toc.chapters = [chapter1, chapter2]
@@ -191,18 +188,16 @@ class TestBookGenerator(unittest.TestCase):
         # Setup
         self.generator.book_title = "My Awesome Book"
         self.generator.filepath = Path("test_output/my_book.md")
-        # Use a real Chapter instance here
         chapter = Chapter(title="Chapter 1", subchapters=["Subchapter 1.1", "Subchapter 1.2"], number=1)
         mock_intro_content = "Mock intro content for chapter 1"
         mock_sub1_content = "Mock content for subchapter 1.1"
         mock_sub2_content = "Mock content for subchapter 1.2"
-        # Simulate the sequence of content generation calls
+        # Simulate the sequence of content generation calls (now from Gemini mock)
         self.mock_content_generator.generate_content.side_effect = [
             mock_intro_content,
             mock_sub1_content,
             mock_sub2_content,
         ]
-        # Mock the TOC object held by the generator to control chapter_toc return
         self.generator.toc = MagicMock(spec=TableOfContents)
         self.generator.toc.chapter_toc.return_value = "Mock chapter 1 TOC\n\n"
 
@@ -210,7 +205,7 @@ class TestBookGenerator(unittest.TestCase):
         self.generator._generate_chapter(chapter)
 
         # Assertions
-        # Check content generation calls
+        # Check content generation calls (prompts remain the same)
         self.assertEqual(self.mock_content_generator.generate_content.call_count, 3)
         self.mock_content_generator.generate_content.assert_any_call(
             f"Write a concise introduction for Chapter {chapter.number}: '{chapter.title}' in a book titled '{self.generator.book_title}'."
@@ -239,4 +234,6 @@ class TestBookGenerator(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    # Restore logging level if running tests directly
+    logging.disable(logging.NOTSET)
     unittest.main()

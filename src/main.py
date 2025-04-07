@@ -4,12 +4,12 @@ import argparse
 import sys
 from pathlib import Path
 
-# Assuming src is in the python path (e.g., via pytest.ini or running as module)
-# Removed APIConfig import
-from errors import BookGenerationError
-from content_generation import ContentGenerator
-from book_generator import BookGenerator
-from book_writer import BookWriter
+# Use relative imports when running as a module
+from .errors import BookGenerationError
+from .config import APIConfig
+from .content_generation import ContentGenerator
+from .book_generator import BookGenerator
+from .book_writer import BookWriter
 
 # Configure logging
 logging.basicConfig(
@@ -22,20 +22,19 @@ logging.basicConfig(
 
 def create_default_toc_prompt(title: str) -> str:
     """Creates a default prompt for generating the table of contents."""
-    # Note: distilgpt2 might struggle with complex JSON generation.
-    # Keep the prompt simple or expect potential parsing issues.
+    # Prompt suitable for Gemini models
     return (
-        f"Create a simple table of contents for a book titled '{title}'. "
-        "List chapter titles and a few subchapter titles under each. "
+        f"Create a detailed and logical table of contents for a book titled '{title}'. "
+        "Include chapter titles and several relevant subchapter titles under each chapter. "
         "Format the output as a valid JSON list of dictionaries. "
         "Each dictionary must have 'title' (string) and 'subchapters' (list of strings) keys. "
-        "Output ONLY the JSON list. Example: "
-        '[{"title": "Chapter 1: Start", "subchapters": ["Topic 1.1", "Topic 1.2"]}, {"title": "Chapter 2: Middle", "subchapters": ["Topic 2.1"]}]'
+        "Output ONLY the JSON list, without any introductory text or code fences (like ```json). Example: "
+        '[{"title": "Chapter 1: Introduction to Topic", "subchapters": ["Subtopic 1.1", "Subtopic 1.2", "Subtopic 1.3"]}, {"title": "Chapter 2: Core Concepts", "subchapters": ["Concept 2.1", "Concept 2.2"]}]'
     )
 
 def parse_arguments():
     """Parses command-line arguments."""
-    parser = argparse.ArgumentParser(description="Generate a book using a local AI model.")
+    parser = argparse.ArgumentParser(description="Generate a book using the Gemini AI model.")
     parser.add_argument(
         "--title",
         type=str,
@@ -47,7 +46,19 @@ def parse_arguments():
         type=str,
         help="A specific prompt for generating the Table of Contents. If omitted, a default prompt is used."
     )
-    # Removed --provider and --model arguments
+    # Add model selection argument (optional, defaults to the desired preview model)
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="models/gemini-2.5-pro-preview-03-25", # Default to the specified model
+        help="The Gemini model to use (e.g., 'models/gemini-1.5-flash', 'models/gemini-pro')."
+    )
+    parser.add_argument(
+        "--api-key-file",
+        type=str,
+        default="~/.api-gemini", # Default API key location
+        help="Path to the file containing the Gemini API key (default: ~/.api-gemini)."
+    )
     parser.add_argument(
         "--output-dir",
         type=str,
@@ -64,7 +75,6 @@ def parse_arguments():
         action='store_true',
         help="Display the current book content after TOC generation/loading and before generating chapters."
     )
-    # Removed model validation logic based on provider
     args = parser.parse_args()
     return args
 
@@ -73,9 +83,11 @@ def main():
 
     try:
         # --- Initialization ---
-        logging.info(f"Initializing with local model...")
-        # Initialize ContentGenerator directly (uses default 'distilgpt2')
-        content_generator = ContentGenerator()
+        logging.info(f"Initializing with Gemini model '{args.model}'...")
+        # Initialize APIConfig first
+        api_config = APIConfig(api_key_file=args.api_key_file)
+        # Pass config and model name to ContentGenerator
+        content_generator = ContentGenerator(config=api_config, model_name=args.model)
         writer = BookWriter(output_dir=args.output_dir)
         book_generator = BookGenerator(content_generator, writer)
 
@@ -83,9 +95,7 @@ def main():
         book_title = args.title
         toc_prompt = args.toc_prompt if args.toc_prompt else create_default_toc_prompt(book_title)
 
-        logging.info(f"Generating Table of Contents for '{book_title}'...")
-        # Note: TOC generation might be less reliable with distilgpt2.
-        # Consider increasing max_length or adjusting the prompt if issues occur.
+        logging.info(f"Generating Table of Contents for '{book_title}' using {args.model}...")
         book_generator.generate_toc(book_title, toc_prompt)
         logging.info(f"Initial Table of Contents generated and saved to Markdown.")
         book_generator.save_toc() # Always save the initial JSON TOC
@@ -95,9 +105,9 @@ def main():
             logging.info("Pausing for interactive TOC modification.")
             print(f"\n--- INTERACTIVE TOC EDIT ---")
             print(f"The generated Table of Contents has been saved to:")
-            # Ensure filepath exists before accessing methods
             if book_generator.filepath:
-                print(f"  {book_generator.filepath.with_suffix('.json')}")
+                toc_json_path = book_generator.filepath.with_suffix('.json')
+                print(f"  {toc_json_path}")
                 print(f"Please review and modify this JSON file if needed.")
                 input("Press Enter to continue after saving your changes...")
                 try:
@@ -136,13 +146,13 @@ def main():
             print("\nBook generation finished with potential issues. Please check the log output.")
 
     except BookGenerationError as e:
-        logging.error(f"A book generation error occurred: {e}", exc_info=False) # Keep log cleaner
+        logging.error(f"A book generation error occurred: {e}", exc_info=False)
         print(f"\nERROR: {e}")
-        sys.exit(1) # Exit with error code
+        sys.exit(1)
     except Exception as e:
-        logging.error(f"An unexpected error occurred: {e}", exc_info=True) # Log full trace for unexpected
+        logging.error(f"An unexpected error occurred: {e}", exc_info=True)
         print(f"\nUNEXPECTED ERROR: {e}")
-        sys.exit(1) # Exit with error code
+        sys.exit(1)
 
 
 if __name__ == "__main__":
