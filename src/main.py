@@ -50,8 +50,8 @@ def parse_arguments():
     parser.add_argument(
         "--model",
         type=str,
-        default="models/gemini-2.5-pro-exp-03-25", # Default to the specified model
-        help="The Gemini model to use (e.g., 'models/gemini-1.5-flash', 'models/gemini-pro')."
+        default="models/gemini-2.0-flash", # Default to the flash model
+        help="The Gemini model to use (e.g., 'models/gemini-2.0-flash', 'models/gemini-pro')."
     )
     parser.add_argument(
         "--api-key-file",
@@ -75,20 +75,12 @@ def parse_arguments():
         action='store_true',
         help="Display the current book content after TOC generation/loading and before generating chapters."
     )
-    parser.add_argument(
-        "--enable-search",
-        action='store_true',
-        help="Enable the Google Search tool for the Gemini model (requires a compatible model)."
-    )
+    # Removed --enable-search argument
 
     args = parser.parse_args()
     return args
 
-    parser.add_argument(
-        "--enable-search",
-        action='store_true',
-        help="Enable the Google Search tool for the Gemini model (requires a compatible model)."
-    )
+    # Ensure the invalid parser.add_argument block remnant is removed
 def main():
     args = parse_arguments()
 
@@ -97,8 +89,8 @@ def main():
         logging.info(f"Initializing with Gemini model '{args.model}'...")
         # Initialize APIConfig first
         api_config = APIConfig(api_key_file=args.api_key_file)
-        # Pass config, model name, and search flag to ContentGenerator
-        content_generator = ContentGenerator(config=api_config, model_name=args.model, enable_search=args.enable_search)
+        # Pass config and model name to ContentGenerator (search removed)
+        content_generator = ContentGenerator(config=api_config, model_name=args.model)
         writer = BookWriter(output_dir=args.output_dir)
         book_generator = BookGenerator(content_generator, writer)
 

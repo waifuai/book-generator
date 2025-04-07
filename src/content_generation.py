@@ -1,51 +1,39 @@
 import logging
 import google.generativeai as genai
-# Import Tool and GoogleSearchRetrieval for enabling search
-from google.ai.generativelanguage import Tool, GoogleSearchRetrieval
+# Removed Tool and GoogleSearchRetrieval imports
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from .errors import BookGenerationError
-from .config import APIConfig # Import APIConfig
-
+# Use absolute imports relative to src
+from errors import BookGenerationError
+from config import APIConfig # Import APIConfig
 class ContentGenerator:
-    """Generates content using the Google Generative AI API with search tool."""
-    def __init__(self, config: APIConfig, model_name: str = "models/gemini-2.5-pro-exp-03-25", enable_search: bool = False):
+    """Generates content using the Google Generative AI API."""
+    def __init__(self, config: APIConfig, model_name: str = "models/gemini-2.0-flash"):
         """
         Initializes ContentGenerator with the Gemini API.
 
         Args:
             config: An instance of APIConfig containing the configured API key.
             model_name: The name of the Gemini model to use.
-                        Defaults to "models/gemini-2.5-pro-exp-03-25".
-            enable_search: Whether to enable the Google Search tool. Defaults to False.
-                           Note: Requires a model known to support the search tool if enabled.
+                        Defaults to "models/gemini-2.0-flash".
         """
         self.model_name = model_name
         self.config = config
-        self.enable_search = enable_search
+        # Removed self.enable_search
 
         try:
-            tools_config = []
-            if self.enable_search:
-                # Define the Google Search tool configuration only if enabled
-                search_tool = Tool(google_search_retrieval=GoogleSearchRetrieval())
-                tools_config = [search_tool]
-                print(f"Initializing Gemini model '{self.model_name}' with search tool enabled...")
-            else:
-                print(f"Initializing Gemini model '{self.model_name}' without search tool...")
-
-            # Initialize the Gemini model
+            print(f"Initializing Gemini model '{self.model_name}'...")
+            # Initialize the Gemini model without tools
             self.model = genai.GenerativeModel(
-                model_name=self.model_name,
-                tools=tools_config # Pass the tool config (empty list if search disabled)
+                model_name=self.model_name
+                # Removed tools parameter
             )
             print(f"Gemini model '{self.model_name}' initialized successfully.")
 
         except Exception as e:
             # Catch potential errors during initialization
-            search_status = "with search tool" if self.enable_search else "without search tool"
-            logging.error(f"Failed to initialize Gemini model '{self.model_name}' {search_status}: {e}", exc_info=True)
-            raise BookGenerationError(f"Failed to initialize Gemini model '{self.model_name}' {search_status}: {e}")
+            logging.error(f"Failed to initialize Gemini model '{self.model_name}': {e}", exc_info=True)
+            raise BookGenerationError(f"Failed to initialize Gemini model '{self.model_name}': {e}")
 
     @retry(
         stop=stop_after_attempt(3),
@@ -54,8 +42,7 @@ class ContentGenerator:
     )
     def generate_content(self, prompt: str) -> str:
         """
-        Generates content using the initialized Gemini model. The model may use
-        the enabled search tool if needed based on the prompt.
+        Generates content using the initialized Gemini model.
 
         Args:
             prompt: The input prompt for the model.
@@ -64,8 +51,7 @@ class ContentGenerator:
             The generated text as a string.
         """
         try:
-            search_status = "(search enabled)" if self.enable_search else "(search disabled)"
-            print(f"Generating content with Gemini model '{self.model_name}' {search_status}...")
+            print(f"Generating content with Gemini model '{self.model_name}'...")
             # Generate content using the Gemini API
             # If search tool was enabled during init, the model may use it.
             response = self.model.generate_content(
@@ -85,14 +71,7 @@ class ContentGenerator:
 
             generated_text = response.text
 
-            # Check if the model actually used the search tool (only relevant if enabled)
-            if self.enable_search:
-                try:
-                    if response.candidates[0].citation_metadata:
-                         logging.info(f"Gemini used the search tool. Citations found: {len(response.candidates[0].citation_metadata.citation_sources)}")
-                         # You could potentially process citations here if needed
-                except (AttributeError, IndexError):
-                     logging.info("Gemini did not report using the search tool for this request (or search was disabled).")
+            # Removed search tool usage check
 
 
             print("Gemini generation complete.")

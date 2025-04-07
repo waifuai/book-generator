@@ -26,86 +26,47 @@ class TestContentGenerator(unittest.TestCase):
         self.mock_api_config = MagicMock(spec=APIConfig)
         self.mock_api_config.api_key = "fake-api-key" # Provide a dummy key
 
-    @patch('content_generation.Tool')
-    @patch('content_generation.GoogleSearchRetrieval')
+    # Removed Tool and GoogleSearchRetrieval mocks
     @patch('content_generation.genai.GenerativeModel')
-    def test_init_success_search_disabled(self, mock_generative_model, mock_search_retrieval, mock_tool):
-        """Test successful initialization with search disabled (default)."""
+    def test_init_success(self, mock_generative_model):
+        """Test successful initialization (search functionality removed)."""
         mock_model_instance = MagicMock()
         mock_generative_model.return_value = mock_model_instance
 
-        # Initialize with enable_search=False (or default)
-        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test", enable_search=False)
+        # Initialize ContentGenerator (no enable_search parameter)
+        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test")
 
         # Assert GenerativeModel called correctly
         mock_generative_model.assert_called_once()
         call_args, call_kwargs = mock_generative_model.call_args
         self.assertEqual(call_kwargs.get('model_name'), "models/gemini-test")
-        # Assert tools list is empty when search is disabled
-        self.assertEqual(call_kwargs.get('tools'), [])
+        # Assert tools parameter is not passed or is implicitly empty
+        self.assertNotIn('tools', call_kwargs) # Or check it's [] if genai lib defaults it
 
-        # Assert search tool classes were NOT instantiated
-        mock_search_retrieval.assert_not_called()
-        mock_tool.assert_not_called()
+        # Search tool classes are no longer imported/used
 
         # Assert generator attributes
         self.assertEqual(generator.model_name, "models/gemini-test")
         self.assertEqual(generator.model, mock_model_instance)
         self.assertEqual(generator.config, self.mock_api_config)
-        self.assertFalse(generator.enable_search)
+        # self.enable_search attribute removed
 
-    # Add a new test for initialization with search enabled
-    @patch('content_generation.Tool')
-    @patch('content_generation.GoogleSearchRetrieval')
-    @patch('content_generation.genai.GenerativeModel')
-    def test_init_success_search_enabled(self, mock_generative_model, mock_search_retrieval, mock_tool):
-        """Test successful initialization with search enabled."""
-        mock_model_instance = MagicMock()
-        mock_generative_model.return_value = mock_model_instance
-        mock_search_tool_instance = MagicMock()
-        mock_tool.return_value = mock_search_tool_instance
-
-        # Initialize with enable_search=True
-        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-pro", enable_search=True)
-
-        # Assert search tool classes were instantiated
-        mock_search_retrieval.assert_called_once()
-        mock_tool.assert_called_once_with(google_search_retrieval=mock_search_retrieval.return_value)
-
-        # Assert GenerativeModel called correctly
-        mock_generative_model.assert_called_once()
-        call_args, call_kwargs = mock_generative_model.call_args
-        self.assertEqual(call_kwargs.get('model_name'), "models/gemini-pro")
-        # Assert tools list contains the mocked search tool instance
-        self.assertEqual(call_kwargs.get('tools'), [mock_search_tool_instance])
-
-        # Assert generator attributes
-        self.assertEqual(generator.model_name, "models/gemini-pro")
-        self.assertEqual(generator.model, mock_model_instance)
-        self.assertEqual(generator.config, self.mock_api_config)
-        self.assertTrue(generator.enable_search)
-
+    # test_init_success_search_enabled was removed.
 
     @patch('content_generation.genai.GenerativeModel')
     def test_init_failure(self, mock_generative_model):
         """Test handling of Gemini initialization failure."""
         mock_generative_model.side_effect = Exception("Model connection failed")
 
-        # Test failure with search disabled
-        with self.assertRaises(BookGenerationError) as context_disabled:
-            ContentGenerator(config=self.mock_api_config, model_name="invalid-gemini-model", enable_search=False)
-        self.assertIn("Failed to initialize Gemini model 'invalid-gemini-model' without search tool", str(context_disabled.exception))
-        self.assertIn("Model connection failed", str(context_disabled.exception))
-
-        # Test failure with search enabled
-        with self.assertRaises(BookGenerationError) as context_enabled:
-            ContentGenerator(config=self.mock_api_config, model_name="invalid-gemini-model", enable_search=True)
-        self.assertIn("Failed to initialize Gemini model 'invalid-gemini-model' with search tool", str(context_enabled.exception))
-        self.assertIn("Model connection failed", str(context_enabled.exception))
+        # Test initialization failure (no search context)
+        with self.assertRaises(BookGenerationError) as context:
+            ContentGenerator(config=self.mock_api_config, model_name="invalid-gemini-model")
+        self.assertIn("Failed to initialize Gemini model 'invalid-gemini-model'", str(context.exception))
+        self.assertIn("Model connection failed", str(context.exception))
 
     @patch('content_generation.genai.GenerativeModel')
     def test_generate_content_success(self, mock_generative_model):
-        """Test successful content generation (search disabled)."""
+        """Test successful content generation."""
         # Mock the model instance and its generate_content method
         mock_model_instance = MagicMock()
         mock_response = MagicMock()
@@ -114,15 +75,14 @@ class TestContentGenerator(unittest.TestCase):
         mock_part = MagicMock()
         mock_part.text = "Generated content from Gemini."
         mock_candidate.content.parts = [mock_part]
-        # Simulate no citation metadata when search is disabled/not used
-        mock_candidate.citation_metadata = None
+        # citation_metadata check was removed from source code.
         mock_response.candidates = [mock_candidate]
 
         mock_model_instance.generate_content.return_value = mock_response
         mock_generative_model.return_value = mock_model_instance
 
-        # Initialize with search disabled
-        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test", enable_search=False)
+        # Initialize ContentGenerator
+        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test")
         result = generator.generate_content("Test prompt for Gemini")
 
         self.assertEqual(result, "Generated content from Gemini.")
@@ -144,8 +104,8 @@ class TestContentGenerator(unittest.TestCase):
         mock_model_instance.generate_content.return_value = mock_response
         mock_generative_model.return_value = mock_model_instance
 
-        # Initialize with search disabled
-        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test", enable_search=False)
+        # Initialize ContentGenerator
+        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test")
 
         with self.assertRaises(BookGenerationError) as context:
             generator.generate_content("Risky prompt")
@@ -170,8 +130,8 @@ class TestContentGenerator(unittest.TestCase):
         ]
         mock_generative_model.return_value = mock_model_instance
 
-        # Initialize with search disabled
-        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test", enable_search=False)
+        # Initialize ContentGenerator
+        generator = ContentGenerator(config=self.mock_api_config, model_name="models/gemini-test")
 
         with self.assertRaises(BookGenerationError) as context:
             generator.generate_content("test prompt")
@@ -180,7 +140,7 @@ class TestContentGenerator(unittest.TestCase):
         # Check generator was called multiple times due to retry
         self.assertEqual(mock_model_instance.generate_content.call_count, 3) # Default retry is 3 attempts
 
-    # Removed Hugging Face specific tests like EOS replacement
+    # No Hugging Face specific tests were present to remove.
 
 if __name__ == "__main__":
     # Restore logging level if running tests directly

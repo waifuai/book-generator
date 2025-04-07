@@ -2,10 +2,11 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from .errors import BookGenerationError
-from .content_generation import ContentGenerator
-from .table_of_contents import TableOfContents, Chapter
-from .book_writer import BookWriter
+# Use absolute imports relative to src
+from errors import BookGenerationError
+from content_generation import ContentGenerator
+from table_of_contents import TableOfContents, Chapter
+from book_writer import BookWriter
 
 class BookGenerator:
     """Coordinates the generation of the book."""
