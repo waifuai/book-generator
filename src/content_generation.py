@@ -8,14 +8,14 @@ from .errors import BookGenerationError
 from .config import APIConfig # Import APIConfig
 class ContentGenerator:
     """Generates content using the Google Generative AI API."""
-    def __init__(self, config: APIConfig, model_name: str = "models/gemini-2.0-flash"):
+    def __init__(self, config: APIConfig, model_name: str = "models/gemini-2.5-flash-preview-04-17"):
         """
         Initializes ContentGenerator with the Gemini API.
 
         Args:
             config: An instance of APIConfig containing the configured API key.
             model_name: The name of the Gemini model to use.
-                        Defaults to "models/gemini-2.0-flash".
+                        Defaults to "models/gemini-2.5-flash-preview-04-17".
         """
         self.model_name = model_name
         self.config = config
