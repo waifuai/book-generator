@@ -50,7 +50,7 @@ def parse_arguments():
     parser.add_argument(
         "--model",
         type=str,
-        default="models/gemini-2.5-pro-preview-03-25", # Default to the flash model
+        default="models/gemini-2.5-pro-preview-03-25", 
         help="The Gemini model to use (e.g., 'models/gemini-2.5-pro-preview-03-25', 'models/gemini-pro')."
     )
     parser.add_argument(
