@@ -50,8 +50,8 @@ def parse_arguments():
     parser.add_argument(
         "--model",
         type=str,
-        default="models/gemini-2.5-pro-preview-03-25", 
-        help="The Gemini model to use (e.g., 'models/gemini-2.5-pro-preview-03-25', 'models/gemini-pro')."
+        default="models/gemini-2.5-pro-preview-05-06", 
+        help="The Gemini model to use (e.g., 'models/gemini-2.5-pro-preview-05-06', 'models/gemini-pro')."
     )
     parser.add_argument(
         "--api-key-file",
