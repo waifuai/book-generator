@@ -1,10 +1,10 @@
 # Book Generator with Google Gemini
 
-This Python script uses the Google Gemini API (specifically `models/gemini-2.5-pro` by default) to generate books based on a given title and a prompt for the table of contents. It dynamically creates chapters and subchapters based on the generated TOC, writing the content to a Markdown file.
+This Python script uses the Google GenAI SDK (specifically `gemini-2.5-pro` by default) to generate books based on a given title and a prompt for the table of contents. It dynamically creates chapters and subchapters based on the generated TOC, writing the content to a Markdown file.
 ## Features
 
 *   **Dynamic Book Generation:** Creates a book structure based on a user-provided title and TOC prompt.
-*   **Gemini API Integration:** Leverages the power of Google Gemini models (using `models/gemini-2.5-pro` by default) for content generation.
+*   **Gemini API Integration:** Leverages the power of Google Gemini models (using `gemini-2.5-pro` by default) for content generation.
 *   **Command-Line Interface:** Allows customization of book title, prompts, model, API key location, and output via CLI arguments.
 *   **JSON-based TOC:** Uses JSON for structured table of contents generation.
 *   **Interactive TOC Editing:** Option to pause and manually edit the generated Table of Contents JSON file.
@@ -17,11 +17,11 @@ This Python script uses the Google Gemini API (specifically `models/gemini-2.5-p
 *   **Python 3.x:** Make sure you have Python 3 installed.
 *   **Virtual Environment Tool (`uv`):** This project uses `uv` for environment management. Install it if you haven't already (e.g., `pip install --user uv`).
 *   **Gemini API Key:** You need an API key from Google AI Studio (or Google Cloud).
-*   **Required Libraries:** The necessary libraries (`google-generativeai`, `pytest`, `tenacity`) will be installed into a virtual environment.
+*   **Required Libraries:** The necessary libraries (`google-genai`, `pytest`, `tenacity`) will be installed into a virtual environment.
 
 ## Setup
 
-1.  **Create API Key File:** Create a file named `.api-gemini` in your home directory (`~/.api-gemini`) and paste your Gemini API key into it. Ensure the file has restrictive permissions. Alternatively, you can specify a different path using the `--api-key-file` argument.
+1.  **Set Credentials:** Preferred: set GEMINI_API_KEY (or GOOGLE_API_KEY) in your environment. Fallback: create a file named `.api-gemini` in your home directory (`~/.api-gemini`) and paste your Gemini API key into it. Ensure the file has restrictive permissions. You can override the path via `--api-key-file`.
 
 2.  **Create Virtual Environment:** Navigate to the project root directory in your terminal and create a `uv` environment:
     ```bash
@@ -30,7 +30,7 @@ This Python script uses the Google Gemini API (specifically `models/gemini-2.5-p
 
 3.  **Install Dependencies:** Install the required packages into the virtual environment using `uv`. This command ensures `pip` is available, installs `uv` inside the venv, and then installs the project dependencies:
     ```bash
-    .venv/Scripts/python.exe -m ensurepip ; .venv/Scripts/python.exe -m pip install uv ; .venv/Scripts/python.exe -m uv pip install google-generativeai pytest tenacity
+    .venv/Scripts/python.exe -m ensurepip ; .venv/Scripts/python.exe -m pip install uv ; .venv/Scripts/python.exe -m uv pip install google-genai==1.28.0 pytest tenacity
     ```
 
 ## Usage
@@ -46,15 +46,15 @@ The script is run from the command line using the Python interpreter within the 
 **Example with a custom TOC prompt, specific model, and interactive editing:**
 
 ```bash
-.venv/Scripts/python.exe -m src.main --title "Interactive Gemini Book" --toc-prompt "Create a 5-chapter TOC about advanced AI..." --model "models/gemini-2.5-pro" --interactive-toc
+.venv/Scripts/python.exe -m src.main --title "Interactive Gemini Book" --toc-prompt "Create a 5-chapter TOC about advanced AI..." --model "gemini-2.5-pro" --interactive-toc
 ```
 
 **Command-Line Arguments:**
 
 *   `--title` (str, **required**): The title of the book.
 *   `--toc-prompt` (str, optional): A specific prompt for generating the Table of Contents. If omitted, a default prompt is used.
-*   `--model` (str, optional, default='models/gemini-2.5-pro'): The Gemini model to use (e.g., 'models/gemini-2.5-pro', 'models/gemini-pro').
-*   `--api-key-file` (str, optional, default='~/.api-gemini'): Path to the file containing the Gemini API key.
+*   `--model` (str, optional, default='gemini-2.5-pro'): The Gemini model to use (e.g., 'gemini-2.5-pro').
+*   `--api-key-file` (str, optional, default='~/.api-gemini'): Path to the file containing the Gemini API key (fallback if env var not set).
 *   `--output-dir` (str, optional, default='books'): The directory to save the generated book files.
 *   `--interactive-toc` (flag, optional): Pause execution after TOC generation to allow manual editing of the `<book_title>.json` file before proceeding.
 *   `--browse-after-toc` (flag, optional): Display the current book content (if any) after TOC generation/loading and before generating chapters.
