@@ -2,7 +2,11 @@ import logging
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .errors import BookGenerationError
-from .config import APIConfig, DEFAULT_MODEL
+from .config import APIConfig
+
+# Keep a local default to satisfy type hints and legacy imports;
+# actual runtime default is decided in main.py via ~/.model-gemini or CLI.
+DEFAULT_MODEL = "gemini-2.5-pro"
 
 class ContentGenerator:
     """Generates content using the Google GenAI SDK."""

@@ -4,7 +4,42 @@ from pathlib import Path
 from .errors import BookGenerationError
 from google import genai
 
-DEFAULT_MODEL = "gemini-2.5-pro"
+# Default provider/model behavior:
+# - Provider default: openrouter (as requested), but current code only wires Gemini.
+# - Model default for Gemini is resolved from ~/.model-gemini when not overridden by CLI.
+# - We also provide a resolver for ~/.model-openrouter for future OpenRouter integration.
+DEFAULT_GEMINI_MODEL_FALLBACK = "gemini-2.5-pro"
+GEMINI_MODEL_FILE = Path("~/.model-gemini").expanduser()
+OPENROUTER_MODEL_FILE = Path("~/.model-openrouter").expanduser()
+
+def _resolve_model_from_file(path: Path) -> str | None:
+    """
+    Return stripped contents of a single-line model file if present and non-empty, else None.
+    """
+    try:
+        if path.is_file():
+            content = path.read_text(encoding="utf-8").strip()
+            return content if content else None
+    except Exception:
+        # Silent fallback; caller decides the ultimate default
+        return None
+    return None
+
+def resolve_default_gemini_model() -> str:
+    """
+    Resolve the default Gemini model with precedence:
+      1) ~/.model-gemini (if exists and non-empty)
+      2) hardcoded fallback DEFAULT_GEMINI_MODEL_FALLBACK
+    """
+    file_model = _resolve_model_from_file(GEMINI_MODEL_FILE)
+    return file_model or DEFAULT_GEMINI_MODEL_FALLBACK
+
+def resolve_default_openrouter_model() -> str | None:
+    """
+    Resolve the default OpenRouter model from ~/.model-openrouter if present.
+    Returns None when not available. Intended for future OpenRouter provider use.
+    """
+    return _resolve_model_from_file(OPENROUTER_MODEL_FILE)
 
 class APIConfig:
     """Loads credentials for Google GenAI and builds a central Client."""

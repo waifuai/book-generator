@@ -4,7 +4,7 @@ This Python script uses the Google GenAI SDK (specifically `gemini-2.5-pro` by d
 ## Features
 
 *   **Dynamic Book Generation:** Creates a book structure based on a user-provided title and TOC prompt.
-*   **Gemini API Integration:** Leverages the power of Google Gemini models (using `gemini-2.5-pro` by default) for content generation.
+*   **Gemini API Integration:** Leverages the power of Google Gemini models (default resolved from ~/.model-gemini, falling back to `gemini-2.5-pro`) for content generation.
 *   **Command-Line Interface:** Allows customization of book title, prompts, model, API key location, and output via CLI arguments.
 *   **JSON-based TOC:** Uses JSON for structured table of contents generation.
 *   **Interactive TOC Editing:** Option to pause and manually edit the generated Table of Contents JSON file.
@@ -53,7 +53,7 @@ The script is run from the command line using the Python interpreter within the 
 
 *   `--title` (str, **required**): The title of the book.
 *   `--toc-prompt` (str, optional): A specific prompt for generating the Table of Contents. If omitted, a default prompt is used.
-*   `--model` (str, optional, default='gemini-2.5-pro'): The Gemini model to use (e.g., 'gemini-2.5-pro').
+*   `--model` (str, optional): The Gemini model to use (e.g., 'gemini-2.5-pro'). If omitted, the app will use the contents of `~/.model-gemini` when present, otherwise fallback to `gemini-2.5-pro`.
 *   `--api-key-file` (str, optional, default='~/.api-gemini'): Path to the file containing the Gemini API key (fallback if env var not set).
 *   `--output-dir` (str, optional, default='books'): The directory to save the generated book files.
 *   `--interactive-toc` (flag, optional): Pause execution after TOC generation to allow manual editing of the `<book_title>.json` file before proceeding.

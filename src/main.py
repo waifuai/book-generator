@@ -7,6 +7,7 @@ from pathlib import Path
 # Use relative imports when running as a module
 from .errors import BookGenerationError
 from .config import APIConfig
+from .config import resolve_default_gemini_model
 from .content_generation import ContentGenerator
 from .book_generator import BookGenerator
 from .book_writer import BookWriter
@@ -50,8 +51,8 @@ def parse_arguments():
     parser.add_argument(
         "--model",
         type=str,
-        default="gemini-2.5-pro",
-        help="The Gemini model to use (e.g., 'gemini-2.5-pro')."
+        default=None,
+        help="The Gemini model to use (e.g., 'gemini-2.5-pro'). Overrides ~/.model-gemini when provided."
     )
     parser.add_argument(
         "--api-key-file",
@@ -86,11 +87,16 @@ def main():
 
     try:
         # --- Initialization ---
-        logging.info(f"Initializing with Gemini model '{args.model}'...")
+        # Determine model with precedence:
+        # 1) CLI --model
+        # 2) ~/.model-gemini
+        # 3) hardcoded fallback
+        chosen_model = args.model or resolve_default_gemini_model()
+        logging.info(f"Initializing with Gemini model '{chosen_model}'...")
         # Initialize APIConfig first
         api_config = APIConfig(api_key_file=args.api_key_file)
-        # Pass config and model name to ContentGenerator (search removed)
-        content_generator = ContentGenerator(config=api_config, model_name=args.model)
+        # Pass config and chosen model name to ContentGenerator
+        content_generator = ContentGenerator(config=api_config, model_name=chosen_model)
         writer = BookWriter(output_dir=args.output_dir)
         book_generator = BookGenerator(content_generator, writer)
 
