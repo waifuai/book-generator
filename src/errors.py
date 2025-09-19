@@ -1,11 +1,33 @@
 """
-Custom exceptions for the book generation system.
+Custom Exception Classes
+
+This module defines custom exception classes for the book generation system,
+providing structured error handling with additional context information.
+
+Key responsibilities:
+- Custom exception definitions for book generation errors
+- Enhanced error information with error codes and details
+- Consistent error handling across the application
+- Detailed error reporting and debugging information
 """
+
 from typing import Any, Optional
 
 
 class BookGenerationError(Exception):
-    """Custom exception for book generation errors with enhanced error information."""
+    """
+Custom Exception Classes
+
+This module defines custom exception classes for the book generation system,
+providing structured error handling with additional context information.
+
+Key responsibilities:
+- Custom exception definitions for book generation errors
+- Enhanced error information with error codes and details
+- Consistent error handling across the application
+- Detailed error reporting and debugging information
+"""
+
 
     def __init__(self, message: str, error_code: Optional[str] = None, details: Optional[Any] = None) -> None:
         super().__init__(message)

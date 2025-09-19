@@ -1,3 +1,19 @@
+"""
+Table of Contents Management
+
+This module handles the parsing, validation, and management of book table of contents
+structures. It processes AI-generated JSON responses and converts them into structured
+chapter and subchapter data for book generation.
+
+Key responsibilities:
+- JSON parsing and validation of table of contents data
+- Chapter and subchapter data structure management
+- Markdown generation for table of contents
+- JSON serialization and deserialization
+- Response cleaning and preprocessing
+- Chapter numbering and organization
+"""
+
 import json
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional

@@ -1,3 +1,19 @@
+"""
+Book Generator Presentation Animation
+
+This module creates animated presentations using Manim to explain and demonstrate
+the book generator system architecture, workflow, and features. It provides
+visual explanations of how the system works from high-level architecture to
+detailed workflow steps.
+
+Key responsibilities:
+- System architecture visualization with component diagrams
+- Book generation workflow animation showing step-by-step process
+- Feature showcase with animated cards and descriptions
+- Educational content explaining AI-powered book generation
+- Visual demonstration of the complete system functionality
+"""
+
 from manim import *
 
 class BookGeneratorExplanation(Scene):

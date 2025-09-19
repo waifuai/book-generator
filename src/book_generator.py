@@ -1,3 +1,19 @@
+"""
+Book Generation Coordinator
+
+This module coordinates the entire book generation process, managing the workflow from
+table of contents creation to final book assembly. It serves as the main orchestrator
+that connects all other components together.
+
+Key responsibilities:
+- Table of contents generation and parsing
+- Book generation workflow management
+- Progress reporting and callback handling
+- Chapter and subchapter content generation
+- File path management and organization
+- Error handling and recovery
+"""
+
 import logging
 from pathlib import Path
 from typing import Optional, Callable

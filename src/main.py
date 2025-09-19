@@ -1,3 +1,19 @@
+"""
+Book Generator Main Entry Point
+
+This module serves as the main entry point and command-line interface for the book generator application.
+It handles argument parsing, initialization of all components, and orchestrates the complete book
+generation workflow from table of contents creation to final book output.
+
+Key responsibilities:
+- Command-line argument parsing and validation
+- Application initialization and component setup
+- Table of contents generation and management
+- Book generation process coordination
+- Error handling and user feedback
+- Progress reporting and user interaction
+"""
+
 # src/main.py
 import logging
 import argparse

@@ -1,3 +1,19 @@
+"""
+API Configuration and Client Management
+
+This module handles all API configuration, credential management, and client initialization
+for the Google Gemini AI service. It provides a centralized configuration system with
+multiple fallback options for API keys and model selection.
+
+Key responsibilities:
+- Google Gemini client initialization and management
+- API key resolution with multiple fallback strategies
+- Model configuration and default resolution
+- Environment variable and file-based credential handling
+- Error handling for configuration and client setup
+- Future extensibility for multiple AI providers
+"""
+
 # src/config.py
 import os
 from pathlib import Path

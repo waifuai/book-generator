@@ -1,3 +1,19 @@
+"""
+Test Suite for Book Writer Module
+
+This module contains comprehensive unit tests for the BookWriter class and its
+file writing functionality. It tests file path generation, Markdown content writing,
+and proper formatting of chapters, subchapters, and table of contents.
+
+Key test areas:
+- File path generation and sanitization
+- Chapter writing with proper Markdown formatting
+- Subchapter writing with navigation links
+- Table of contents writing and formatting
+- Output directory management and path handling
+- Mock-based testing for file I/O operations
+"""
+
 # src/tests/test_book_writer.py
 import unittest
 from unittest.mock import patch, mock_open, MagicMock

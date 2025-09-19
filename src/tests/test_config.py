@@ -1,3 +1,19 @@
+"""
+Test Suite for API Configuration Module
+
+This module contains comprehensive unit tests for the APIConfig class and its
+configuration management functionality. It tests API key resolution, client
+initialization, and error handling for various configuration scenarios.
+
+Key test areas:
+- Successful API configuration and client initialization
+- File-based API key loading and validation
+- Environment variable fallback handling
+- Error handling for missing or invalid API key files
+- Google GenAI client initialization failures
+- Mock-based testing for file I/O operations
+"""
+
 # src/tests/test_config.py
 import unittest
 from unittest.mock import patch, mock_open, MagicMock

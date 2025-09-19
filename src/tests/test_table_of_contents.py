@@ -1,3 +1,20 @@
+"""
+Test Suite for Table of Contents Module
+
+This module contains comprehensive unit tests for the TableOfContents and Chapter
+classes. It tests JSON parsing, Markdown generation, data validation, and error
+handling for table of contents management.
+
+Key test areas:
+- JSON parsing and validation of table of contents data
+- Chapter and subchapter data structure management
+- Markdown generation for main and chapter-specific TOCs
+- Response cleaning and preprocessing of AI responses
+- JSON serialization and deserialization
+- Chapter numbering and organization
+- Error handling for invalid data formats
+"""
+
 # src/tests/test_table_of_contents.py
 import unittest
 import json

@@ -1,3 +1,24 @@
+"""
+Test Suite Entry Point - Main Test Module
+
+This module serves as the main entry point for the test suite. It previously contained
+all test classes but they have been refactored into separate files for better
+organization and maintainability.
+
+Current status:
+- All test classes have been moved to their respective module-specific files
+- This file now serves as a reference and potential future integration test location
+- Individual test modules are located in the same directory for better organization
+- Tests can be run using pytest from the tests directory or project root
+
+Test modules available:
+- test_book_generator.py: Tests for BookGenerator coordination
+- test_book_writer.py: Tests for file writing and Markdown generation
+- test_config.py: Tests for API configuration and client setup
+- test_content_generation.py: Tests for AI content generation
+- test_table_of_contents.py: Tests for TOC parsing and management
+"""
+
 # src/tests/test_main.py
 import unittest
 # Note: Keep necessary imports if there were module-level fixtures or helpers,

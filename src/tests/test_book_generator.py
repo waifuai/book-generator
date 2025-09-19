@@ -1,3 +1,19 @@
+"""
+Test Suite for Book Generator Module
+
+This module contains comprehensive unit tests for the BookGenerator class and its
+associated functionality. It tests the coordination of book generation, table of
+contents management, and progress reporting.
+
+Key test areas:
+- Table of contents generation and parsing
+- Book generation workflow and progress tracking
+- Chapter and subchapter content generation
+- File saving and loading operations
+- Error handling and edge cases
+- Mock-based testing for external dependencies
+"""
+
 # src/tests/test_book_generator.py
 import unittest
 from unittest.mock import patch, mock_open, MagicMock

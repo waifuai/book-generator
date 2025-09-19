@@ -1,3 +1,19 @@
+"""
+Test Suite for Content Generation Module
+
+This module contains comprehensive unit tests for the ContentGenerator class and its
+AI-powered content generation functionality. It tests Gemini AI integration, retry
+logic, error handling, and content validation.
+
+Key test areas:
+- Google Gemini AI client integration and initialization
+- Successful content generation with mocked responses
+- Empty response handling and error cases
+- Retry logic with exponential backoff for API failures
+- Error handling for various API exceptions
+- Mock-based testing for external AI service dependencies
+"""
+
 # src/tests/test_content_generation.py
 import unittest
 from unittest.mock import MagicMock

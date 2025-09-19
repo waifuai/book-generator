@@ -1,3 +1,18 @@
+"""
+Book Writer - File Output Management
+
+This module handles all file writing operations for the book generator, responsible for
+creating properly formatted Markdown files with navigation links and proper structure.
+
+Key responsibilities:
+- File path generation and sanitization
+- Markdown file writing with proper formatting
+- Chapter and subchapter content writing
+- Table of contents generation in Markdown format
+- Navigation link management and anchor creation
+- Output directory management
+"""
+
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 

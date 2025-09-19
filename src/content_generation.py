@@ -1,3 +1,19 @@
+"""
+Content Generation with AI
+
+This module handles all AI-powered content generation using Google Gemini models.
+It provides a robust interface for generating book chapters, introductions, and
+subchapter content with automatic retry logic and error handling.
+
+Key responsibilities:
+- Google Gemini AI integration for content generation
+- Prompt engineering and content creation
+- Retry logic with exponential backoff for API failures
+- Error handling and logging for generation failures
+- Content validation and empty response handling
+- Model configuration and client management
+"""
+
 import logging
 from tenacity import retry, stop_after_attempt, wait_exponential
 
