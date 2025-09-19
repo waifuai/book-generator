@@ -47,7 +47,7 @@ class TestTableOfContents(unittest.TestCase):
         toc_json_missing_title = '[{"subchapters": ["Sub 1.1"]}]'
         toc = TableOfContents(toc_json_missing_title)
         self.assertEqual(len(toc.chapters), 1)
-        self.assertEqual(toc.chapters[0].title, "") # Should default to empty string
+        self.assertEqual(toc.chapters[0].title, "Untitled Chapter") # Should default to placeholder title
         self.assertEqual(toc.chapters[0].subchapters, ["Sub 1.1"])
 
 

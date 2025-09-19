@@ -158,7 +158,11 @@ class TestBookGenerator(unittest.TestCase):
         self.generator.filepath = Path("test_output/my_book.md")
         self.generator.book_title = "My Awesome Book"
         chapter1 = MagicMock(spec=Chapter)
+        chapter1.subchapters = ["Sub 1.1", "Sub 1.2"]  # Add subchapters for progress calculation
+        chapter1.title = "Chapter 1"  # Add title for progress reporting
         chapter2 = MagicMock(spec=Chapter)
+        chapter2.subchapters = ["Sub 2.1"]  # Add subchapters for progress calculation
+        chapter2.title = "Chapter 2"  # Add title for progress reporting
         self.generator.toc.chapters = [chapter1, chapter2]
 
         # Mock the internal method _generate_chapter
@@ -170,8 +174,9 @@ class TestBookGenerator(unittest.TestCase):
         # Assertions
         self.assertEqual(result, self.generator.filepath)
         self.assertEqual(self.generator._generate_chapter.call_count, 2)
-        self.generator._generate_chapter.assert_any_call(chapter1)
-        self.generator._generate_chapter.assert_any_call(chapter2)
+        # Verify calls include the new parameters (current_item, total_items)
+        self.generator._generate_chapter.assert_any_call(chapter1, 0, 5)  # 2 chapters + 3 subchapters total
+        self.generator._generate_chapter.assert_any_call(chapter2, 3, 5)  # After chapter1 (3 items: intro + 2 subs)
 
     def test_generate_book_no_toc(self):
         """Test generating a book without a TOC."""
@@ -203,7 +208,7 @@ class TestBookGenerator(unittest.TestCase):
         self.generator.toc.chapter_toc.return_value = "Mock chapter 1 TOC\n\n"
 
         # Action
-        self.generator._generate_chapter(chapter)
+        self.generator._generate_chapter(chapter, current_item=0, total_items=5)
 
         # Assertions
         # Check content generation calls (prompts remain the same)
